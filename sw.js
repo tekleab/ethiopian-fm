@@ -1,5 +1,10 @@
-const CACHE_NAME = 'et-fm-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+const CACHE_NAME = 'et-fm-v2';
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(

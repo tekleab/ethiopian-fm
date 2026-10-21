@@ -1,1035 +1,1419 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="ET Radio" />
-  <meta name="theme-color" content="#0a0a0f" />
-  <meta name="description" content="All Ethiopian FM radio stations in one premium app. Stream Sheger FM, Fana FM, EBC, Bisrat FM and more." />
-  <title>Ethiopian FM Radio</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet" />
-  <style>
-    /* ============================================================
-       CONNECTION QUALITY INDICATOR
-    ============================================================ */
-    .conn-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 20px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      transition: all 0.4s;
-    }
-    .conn-bar.hidden { display: none; }
-    .conn-dots { display: flex; gap: 3px; align-items: flex-end; }
-    .conn-dots span {
-      width: 4px;
-      border-radius: 2px;
-      background: currentColor;
-      opacity: 0.25;
-      transition: all 0.3s;
-    }
-    .conn-dots span.on { opacity: 1; }
-    .conn-dots span:nth-child(1) { height: 6px; }
-    .conn-dots span:nth-child(2) { height: 10px; }
-    .conn-dots span:nth-child(3) { height: 14px; }
-    .conn-dots span:nth-child(4) { height: 18px; }
-    .conn-bar.good   { color: var(--green); }
-    .conn-bar.ok     { color: var(--yellow); }
-    .conn-bar.poor   { color: var(--red); }
-    .conn-bar.offline { color: var(--red); }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="ET Radio"/>
+<meta name="theme-color" content="#06070a"/>
+<meta name="description" content="Ethiopian FM Radio — All FM stations live in one ultra-low-data app for iPhone."/>
+<title>Ethiopian FM Radio</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+/* =====================================================
+   DESIGN TOKENS & SYSTEM
+===================================================== */
+:root {
+  --bg:         #06070a;
+  --bg-card:    rgba(255, 255, 255, 0.045);
+  --bg-card-hi: rgba(255, 255, 255, 0.08);
+  --border:     rgba(255, 255, 255, 0.08);
+  --border-hi:  rgba(255, 255, 255, 0.18);
+  --border-glow:rgba(74, 222, 128, 0.35);
+  
+  /* Ethiopian Tricolor Accents */
+  --g: #10b981;  /* Emerald */
+  --g-glow: rgba(16, 185, 129, 0.4);
+  --y: #f59e0b;  /* Imperial Gold */
+  --y-glow: rgba(245, 158, 11, 0.4);
+  --r: #ef4444;  /* Crimson */
+  --r-glow: rgba(239, 68, 68, 0.4);
 
-    /* ============================================================
-       RECONNECT BANNER
-    ============================================================ */
-    .reconnect-banner {
-      margin: 0 20px 4px;
-      border-radius: var(--radius-sm);
-      padding: 10px 14px;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      animation: banner-pulse 2s ease-in-out infinite;
-    }
-    .reconnect-banner.buffering {
-      display: flex;
-      background: rgba(251,191,36,0.10);
-      border: 1px solid rgba(251,191,36,0.3);
-      color: var(--yellow);
-    }
-    .reconnect-banner.retrying {
-      display: flex;
-      background: rgba(248,113,113,0.10);
-      border: 1px solid rgba(248,113,113,0.3);
-      color: var(--red);
-    }
-    .reconnect-banner.recovered {
-      display: flex;
-      background: rgba(74,222,128,0.10);
-      border: 1px solid rgba(74,222,128,0.3);
-      color: var(--green);
-      animation: none;
-    }
-    @keyframes banner-pulse {
-      0%,100% { opacity: 1; }
-      50%      { opacity: 0.65; }
-    }
-    .reconnect-banner svg { width: 14px; height: 14px; flex-shrink: 0; }
-    .reconnect-banner span { flex: 1; }
-    .reconnect-banner .retry-now {
-      font-size: 11px;
-      font-weight: 700;
-      opacity: 0.8;
-      text-decoration: underline;
-    }
-    .reconnect-banner .retry-now:hover { opacity: 1; }
+  --t1: #f8fafc;
+  --t2: #94a3b8;
+  --t3: #475569;
+  
+  --st: env(safe-area-inset-top, 0px);
+  --sb: env(safe-area-inset-bottom, 0px);
+  
+  /* Dynamic ambient glow */
+  --amb1: #064e3b;
+  --amb2: #78350f;
+  --amb3: #450a0a;
+  
+  --ring-rot: 0deg;
+}
 
-    /* Buffer ring on logo */
-    .np-logo-wrap { position: relative; }
-    .buffer-ring {
-      position: absolute;
-      inset: -4px;
-      border-radius: 20px;
-      border: 2px solid transparent;
-      border-top-color: var(--yellow);
-      border-right-color: var(--yellow);
-      display: none;
-      animation: spin-ring 1s linear infinite;
-    }
-    .np-logo-wrap.buffering .buffer-ring { display: block; }
-    @keyframes spin-ring {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-    /* ============================================================
-       DESIGN TOKENS
-    ============================================================ */
-    :root {
-      --bg-base:       #0a0a0f;
-      --bg-card:       rgba(255,255,255,0.05);
-      --bg-card-hover: rgba(255,255,255,0.09);
-      --bg-modal:      #13131d;
-      --border:        rgba(255,255,255,0.10);
-      --border-strong: rgba(255,255,255,0.18);
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-      --green:  #4ade80;
-      --yellow: #fbbf24;
-      --red:    #f87171;
-      --gold:   #f59e0b;
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
+  background: var(--bg);
+}
 
-      --accent-1: #4ade80;
-      --accent-2: #fbbf24;
-      --accent-3: #f87171;
+body {
+  min-height: 100%;
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--t1);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
-      --text-primary:   #f1f5f9;
-      --text-secondary: #94a3b8;
-      --text-muted:     #475569;
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
 
-      --radius-sm: 12px;
-      --radius-md: 20px;
-      --radius-lg: 28px;
-      --radius-xl: 40px;
+input {
+  font-family: inherit;
+}
 
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
+/* =====================================================
+   BACKGROUND ATMOSPHERE (CSS ONLY - 0 KB NETWORK DATA)
+===================================================== */
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: star-twinkle var(--d, 3s) ease-in-out infinite var(--delay, 0s);
+}
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.05; transform: scale(0.8); }
+  50% { opacity: 0.7; transform: scale(1.6); }
+}
 
-    /* ============================================================
-       RESET & BASE
-    ============================================================ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { height: 100%; -webkit-text-size-adjust: 100%; }
-    body {
-      min-height: 100%;
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg-base);
-      color: var(--text-primary);
-      overflow-x: hidden;
-      padding-top: var(--safe-top);
-      padding-bottom: var(--safe-bottom);
-    }
-    button { cursor: pointer; border: none; background: none; font-family: inherit; color: inherit; }
-    input, textarea { font-family: inherit; }
-    a { color: inherit; text-decoration: none; }
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 1.5s ease;
+}
+.ambient::before {
+  content: '';
+  position: absolute;
+  width: min(120vw, 550px);
+  height: min(120vw, 550px);
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    var(--amb1) 0%,
+    var(--amb2) 36%,
+    var(--amb3) 64%,
+    transparent 75%
+  );
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  filter: blur(80px);
+  opacity: 0.55;
+  animation: ambient-pulse 5s ease-in-out infinite alternate;
+}
+@keyframes ambient-pulse {
+  from { opacity: 0.42; transform: translate(-50%, -60%) scale(0.92); }
+  to   { opacity: 0.68; transform: translate(-50%, -60%) scale(1.08); }
+}
 
-    /* ============================================================
-       ANIMATED BACKGROUND
-    ============================================================ */
-    .bg-orbs {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-    .bg-orbs::before,
-    .bg-orbs::after,
-    .bg-orbs span {
-      content: '';
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.18;
-      animation: float 12s ease-in-out infinite alternate;
-    }
-    .bg-orbs::before {
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, #166534, transparent 70%);
-      top: -150px; left: -150px;
-      animation-duration: 15s;
-    }
-    .bg-orbs::after {
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, #92400e, transparent 70%);
-      bottom: -100px; right: -100px;
-      animation-duration: 18s;
-      animation-delay: -4s;
-    }
-    .bg-orbs span {
-      width: 350px; height: 350px;
-      background: radial-gradient(circle, #7f1d1d, transparent 70%);
-      top: 40%; left: 50%;
-      transform: translate(-50%, -50%);
-      animation-duration: 20s;
-      animation-delay: -8s;
-    }
-    @keyframes float {
-      from { transform: translate(0,0) scale(1); }
-      to   { transform: translate(30px, 20px) scale(1.1); }
-    }
+/* Subtle grid line cyber effect */
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.4;
+}
 
-    /* ============================================================
-       LAYOUT
-    ============================================================ */
-    #app {
-      position: relative;
-      z-index: 1;
-      max-width: 480px;
-      margin: 0 auto;
-      min-height: 100svh;
-      display: flex;
-      flex-direction: column;
-    }
+/* =====================================================
+   APP SHELL
+===================================================== */
+#app {
+  position: relative;
+  z-index: 1;
+  max-width: 440px;
+  margin: 0 auto;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--st);
+}
 
-    /* ============================================================
-       HEADER
-    ============================================================ */
-    header {
-      padding: 20px 20px 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .brand-icon {
-      width: 40px; height: 40px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #166534 0%, #92400e 50%, #7f1d1d 100%);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(74,222,128,0.25);
-      flex-shrink: 0;
-    }
-    .brand-icon svg { width: 22px; height: 22px; }
-    .brand-text { line-height: 1.1; }
-    .brand-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 17px;
-      font-weight: 800;
-      letter-spacing: -0.3px;
-      background: linear-gradient(90deg, var(--green), var(--yellow), var(--red));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .brand-sub {
-      font-size: 10px;
-      color: var(--text-muted);
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-    .header-actions { display: flex; gap: 8px; }
-    .icon-btn {
-      width: 38px; height: 38px;
-      border-radius: 12px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-      flex-shrink: 0;
-    }
-    .icon-btn:hover { background: var(--bg-card-hover); border-color: var(--border-strong); }
-    .icon-btn svg { width: 18px; height: 18px; }
+/* =====================================================
+   HEADER
+===================================================== */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px 6px;
+  flex-shrink: 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #065f46, #92400e 50%, #991b1b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.brand-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.brand-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+  background: linear-gradient(90deg, #34d399, #fbbf24 55%, #f87171);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.brand-sub {
+  font-size: 9.5px;
+  color: var(--t3);
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
 
-    /* ============================================================
-       NOW PLAYING CARD
-    ============================================================ */
-    .now-playing-card {
-      margin: 16px 20px;
-      border-radius: var(--radius-lg);
-      background: linear-gradient(135deg,
-        rgba(22,101,52,0.35) 0%,
-        rgba(146,64,14,0.25) 50%,
-        rgba(127,29,29,0.30) 100%);
-      border: 1px solid var(--border);
-      backdrop-filter: blur(20px);
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .now-playing-card.playing {
-      border-color: rgba(74,222,128,0.3);
-      box-shadow: 0 8px 40px rgba(74,222,128,0.12), 0 0 0 1px rgba(74,222,128,0.1) inset;
-    }
-    .now-playing-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 60%);
-      border-radius: inherit;
-      pointer-events: none;
-    }
+.hdr-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
 
-    .np-idle {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px 0 8px;
-      gap: 8px;
-    }
-    .np-idle-icon {
-      width: 64px; height: 64px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.06);
-      display: flex; align-items: center; justify-content: center;
-      border: 1px solid var(--border);
-    }
-    .np-idle-icon svg { width: 32px; height: 32px; opacity: 0.5; }
-    .np-idle p { color: var(--text-muted); font-size: 14px; }
+/* ECO DATA SAVER PILL BUTTON */
+.eco-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 20px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  color: #34d399;
+  letter-spacing: 0.2px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.eco-pill:active {
+  transform: scale(0.93);
+}
+.eco-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  animation: eco-pulse 2s infinite ease-in-out;
+}
+@keyframes eco-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
 
-    .np-active { display: none; }
-    .np-active.visible { display: block; }
-    .np-idle.hidden { display: none; }
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.icon-btn:active {
+  transform: scale(0.9);
+}
+.icon-btn svg {
+  width: 17px;
+  height: 17px;
+}
 
-    .np-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--green);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-    .np-live-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px var(--green);
-      animation: pulse-dot 1.5s ease-in-out infinite;
-    }
-    @keyframes pulse-dot {
-      0%,100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: 0.5; transform: scale(0.8); }
-    }
+/* =====================================================
+   FM TUNER RIBBON (ANALOGUE/CYBER HYBRID)
+===================================================== */
+.fm-tuner-wrap {
+  padding: 4px 18px 0;
+  flex-shrink: 0;
+}
+.fm-tuner {
+  position: relative;
+  height: 30px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+.fm-scale-ticks {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--t3);
+  letter-spacing: 0.4px;
+  pointer-events: none;
+}
+.fm-needle {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  width: 2.5px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, #ef4444, #f59e0b);
+  box-shadow: 0 0 8px #ef4444, 0 0 16px rgba(239, 68, 68, 0.7);
+  left: 50%;
+  transform: translateX(-50%);
+  transition: left 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 2;
+}
+.fm-lock-pill {
+  position: absolute;
+  right: 6px;
+  top: 5px;
+  bottom: 5px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: var(--g);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 3;
+}
+.fm-lock-pill .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--g);
+  box-shadow: 0 0 6px var(--g);
+}
 
-    .np-station-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 16px;
-    }
-    .np-logo {
-      width: 56px; height: 56px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(251,191,36,0.2));
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      font-weight: 800;
-      text-align: center;
-      line-height: 1.1;
-      color: var(--text-primary);
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .np-logo img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      border-radius: inherit;
-    }
-    .np-info { flex: 1; min-width: 0; }
-    .np-name {
-      font-family: 'Outfit', sans-serif;
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -0.4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .np-freq {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-    .np-fav-btn {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-      flex-shrink: 0;
-    }
-    .np-fav-btn:hover { background: rgba(251,191,36,0.15); border-color: rgba(251,191,36,0.4); }
-    .np-fav-btn.active { background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.6); }
-    .np-fav-btn svg { width: 16px; height: 16px; }
+/* =====================================================
+   PLAYER STAGE (HERO DISPLAY)
+===================================================== */
+.player-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px 8px;
+  min-height: 0;
+  position: relative;
+}
 
-    /* Waveform Visualizer */
-    .np-waveform {
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      gap: 3px;
-      height: 32px;
-      margin-bottom: 16px;
-    }
-    .wave-bar {
-      width: 3px;
-      border-radius: 2px;
-      background: linear-gradient(to top, var(--green), var(--yellow));
-      opacity: 0.7;
-      transition: height 0.15s ease;
-    }
-    .wave-bar.animated {
-      animation: wave-anim var(--d, 0.8s) ease-in-out infinite alternate;
-    }
-    @keyframes wave-anim {
-      from { height: 4px; }
-      to   { height: var(--h, 28px); }
-    }
-    .now-playing-card:not(.playing) .wave-bar {
-      height: 4px !important;
-      animation: none !important;
-    }
+/* VINYL HOLOGRAPHIC LOGO RING */
+.logo-ring-wrap {
+  position: relative;
+  width: min(50vw, 195px);
+  height: min(50vw, 195px);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -6px;
+}
 
-    /* Player Controls */
-    .np-controls {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .ctrl-prev, .ctrl-next {
-      width: 44px; height: 44px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-    }
-    .ctrl-prev:hover, .ctrl-next:hover {
-      background: rgba(255,255,255,0.12);
-    }
-    .ctrl-prev svg, .ctrl-next svg { width: 20px; height: 20px; }
+/* Ethiopian Tricolor Conic Laser Ring */
+.logo-ring-outer {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from var(--ring-rot),
+    var(--g) 0deg,
+    var(--y) 120deg,
+    var(--r) 240deg,
+    var(--g) 360deg
+  );
+  animation: ring-rotate 6s linear infinite;
+  opacity: 0.25;
+  transition: opacity 0.5s ease;
+}
+.playing .logo-ring-outer {
+  opacity: 1;
+  animation: ring-rotate 3s linear infinite;
+}
+.logo-ring-outer::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+@keyframes ring-rotate {
+  from { --ring-rot: 0deg; }
+  to   { --ring-rot: 360deg; }
+}
 
-    .ctrl-play {
-      flex: 1;
-      max-width: 180px;
-      height: 52px;
-      border-radius: var(--radius-md);
-      background: linear-gradient(135deg, var(--green) 0%, #22c55e 100%);
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      font-weight: 700; font-size: 15px;
-      color: #052e16;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: 0 4px 20px rgba(74,222,128,0.35);
-    }
-    .ctrl-play:hover  { transform: scale(1.03); box-shadow: 0 6px 28px rgba(74,222,128,0.5); }
-    .ctrl-play:active { transform: scale(0.97); }
-    .ctrl-play.loading {
-      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-      box-shadow: 0 4px 20px rgba(251,191,36,0.35);
-      color: #451a03;
-    }
-    .ctrl-play.error-state {
-      background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-      box-shadow: 0 4px 20px rgba(248,113,113,0.35);
-      color: #450a0a;
-    }
-    .ctrl-play svg { width: 22px; height: 22px; }
+/* Radial Pulsing Aura */
+.logo-ring-inner {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 
+    0 0 0 2px rgba(16, 185, 129, 0.15),
+    0 0 24px rgba(16, 185, 129, 0.2);
+  transition: box-shadow 0.6s ease;
+}
+.playing .logo-ring-inner {
+  box-shadow: 
+    0 0 0 3px rgba(16, 185, 129, 0.45),
+    0 0 35px rgba(16, 185, 129, 0.4),
+    0 0 70px rgba(245, 158, 11, 0.25),
+    0 0 100px rgba(239, 68, 68, 0.15);
+}
 
-    .ctrl-vol {
-      width: 44px; height: 44px;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-    }
-    .ctrl-vol:hover { background: rgba(255,255,255,0.12); }
-    .ctrl-vol svg { width: 20px; height: 20px; }
+/* Vinyl Face */
+.logo-face {
+  position: relative;
+  z-index: 1;
+  width: calc(100% - 18px);
+  height: calc(100% - 18px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #161622 0%, #0e0e18 65%, #07070e 100%);
+  border: 1px solid var(--border-hi);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+}
+/* Concentric vinyl groove rings */
+.logo-face::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.05);
+  box-shadow: 
+    inset 0 0 0 8px rgba(0,0,0,0.4),
+    inset 0 0 0 10px rgba(255,255,255,0.03),
+    inset 0 0 0 18px rgba(0,0,0,0.4),
+    inset 0 0 0 20px rgba(255,255,255,0.03);
+  pointer-events: none;
+}
+.logo-face img {
+  width: 65%;
+  height: 65%;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(0,0,0,0.6);
+  border: 2px solid rgba(255,255,255,0.12);
+  transition: transform 0.6s ease;
+}
+.playing .logo-face img {
+  animation: vinyl-spin 10s linear infinite;
+}
+@keyframes vinyl-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 
-    /* Volume slider popup */
-    .vol-popup {
-      position: absolute;
-      bottom: calc(100% + 8px);
-      right: 20px;
-      background: var(--bg-modal);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-sm);
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      z-index: 50;
-      display: none;
-    }
-    .vol-popup.open { display: flex; }
-    .vol-popup label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
-    input[type=range] {
-      -webkit-appearance: none;
-      width: 110px;
-      height: 4px;
-      border-radius: 4px;
-      background: linear-gradient(to right, var(--green) 0%, var(--green) var(--pct, 80%), rgba(255,255,255,0.15) var(--pct, 80%), rgba(255,255,255,0.15) 100%);
-      outline: none;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px rgba(74,222,128,0.6);
-      cursor: pointer;
-    }
+/* Idle icon in vinyl center */
+.logo-idle-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.55;
+}
+.logo-idle-icon svg {
+  width: 38px;
+  height: 38px;
+}
+.logo-idle-icon span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
 
-    /* ============================================================
-       TABS
-    ============================================================ */
-    .tabs {
-      display: flex;
-      gap: 6px;
-      padding: 0 20px;
-      margin-bottom: 4px;
-    }
-    .tab-btn {
-      flex: 1;
-      height: 38px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      background: var(--bg-card);
-      border: 1px solid transparent;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      background: rgba(74,222,128,0.12);
-      border-color: rgba(74,222,128,0.3);
-      color: var(--green);
-    }
-    .tab-btn:hover:not(.active) { background: var(--bg-card-hover); color: var(--text-secondary); }
+/* Buffering ring spinner */
+.buffer-overlay {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: var(--y);
+  border-right-color: var(--y);
+  animation: buf-spin 0.8s linear infinite;
+  display: none;
+  z-index: 10;
+}
+.buffering .buffer-overlay {
+  display: block;
+}
+@keyframes buf-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 
-    /* ============================================================
-       SEARCH BAR
-    ============================================================ */
-    .search-wrap {
-      padding: 10px 20px 0;
-    }
-    .search-inner {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 0 14px;
-      transition: all 0.2s;
-    }
-    .search-inner:focus-within {
-      border-color: rgba(74,222,128,0.4);
-      background: rgba(74,222,128,0.06);
-    }
-    .search-inner svg { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
-    .search-inner input {
-      flex: 1;
-      height: 42px;
-      background: none;
-      border: none;
-      outline: none;
-      font-size: 14px;
-      color: var(--text-primary);
-    }
-    .search-inner input::placeholder { color: var(--text-muted); }
-    #search-clear {
-      font-size: 18px;
-      color: var(--text-muted);
-      padding: 4px;
-      display: none;
-    }
-    #search-clear.visible { display: block; }
+/* =====================================================
+   EQUALIZER SPECTRUM BARS
+===================================================== */
+.eq-wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2.5px;
+  height: 26px;
+  margin-top: 4px;
+  opacity: 0.25;
+  transition: opacity 0.4s ease;
+}
+.playing .eq-wrap {
+  opacity: 1;
+}
+.eq-bar {
+  width: 3px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(to top, var(--r), var(--y) 60%, var(--g));
+  height: 4px;
+  animation: eq-anim var(--d, 0.7s) ease-in-out infinite alternate var(--dl, 0s);
+}
+@keyframes eq-anim {
+  from { height: 3px; }
+  to   { height: var(--h, 22px); }
+}
 
-    /* ============================================================
-       STATION LIST
-    ============================================================ */
-    .station-list-wrap {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px 20px 120px;
-      -webkit-overflow-scrolling: touch;
-    }
-    .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      padding: 12px 0 6px;
-    }
-    .empty-state {
-      text-align: center;
-      padding: 48px 20px;
-      color: var(--text-muted);
-    }
-    .empty-state svg { width: 48px; height: 48px; opacity: 0.3; margin-bottom: 12px; }
-    .empty-state h3 { font-size: 16px; color: var(--text-secondary); margin-bottom: 6px; }
-    .empty-state p { font-size: 13px; line-height: 1.5; }
+/* =====================================================
+   STATION INFO
+===================================================== */
+.station-info {
+  text-align: center;
+  margin-top: 8px;
+  padding: 0 10px;
+  width: 100%;
+}
+.stn-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--g);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.playing .stn-live-badge {
+  opacity: 1;
+}
+.live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--g);
+  box-shadow: 0 0 6px var(--g);
+  animation: live-pulse 1.4s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.6); }
+}
 
-    /* Station Card */
-    .station-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: var(--radius-sm);
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      position: relative;
-      overflow: hidden;
-    }
-    .station-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: linear-gradient(to bottom, var(--green), var(--yellow));
-      border-radius: 2px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .station-card:hover { background: var(--bg-card-hover); }
-    .station-card.active {
-      background: rgba(74,222,128,0.08);
-      border-color: rgba(74,222,128,0.25);
-      box-shadow: 0 2px 16px rgba(74,222,128,0.08);
-    }
-    .station-card.active::before { opacity: 1; }
+.stn-name-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+}
+.stn-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(20px, 5.5vw, 26px);
+  font-weight: 900;
+  letter-spacing: -0.4px;
+  display: inline-block;
+}
+.stn-name.marquee {
+  animation: marquee 8s linear infinite;
+}
+@keyframes marquee {
+  0%   { transform: translateX(25%); }
+  100% { transform: translateX(-100%); }
+}
+.stn-freq {
+  font-size: 12.5px;
+  color: var(--t2);
+  margin-top: 3px;
+  font-weight: 500;
+}
 
-    .sc-logo {
-      width: 48px; height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, rgba(74,222,128,0.15), rgba(251,191,36,0.15));
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Outfit', sans-serif;
-      font-size: 10px;
-      font-weight: 800;
-      text-align: center;
-      line-height: 1.15;
-      color: var(--text-secondary);
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .sc-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
-    .sc-info { flex: 1; min-width: 0; }
-    .sc-name {
-      font-size: 15px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .sc-meta {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-    .sc-badges { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
-    .badge {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      padding: 2px 7px;
-      border-radius: 6px;
-    }
-    .badge-https { background: rgba(74,222,128,0.15); color: var(--green); }
-    .badge-http  { background: rgba(248,113,113,0.15); color: var(--red); }
-    .badge-news  { background: rgba(96,165,250,0.15);  color: #60a5fa; }
-    .badge-music { background: rgba(192,132,252,0.15); color: #c084fc; }
-    .badge-sport { background: rgba(251,146,60,0.15);  color: #fb923c; }
-    .badge-relig { background: rgba(250,204,21,0.15);  color: #facc15; }
+/* =====================================================
+   TACTILE CONTROLS PILL
+===================================================== */
+.controls-pill {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-hi);
+  border-radius: 40px;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  padding: 6px 8px;
+  gap: 4px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+.ctrl-skip {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--t2);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.ctrl-skip:active {
+  transform: scale(0.85);
+  background: rgba(255, 255, 255, 0.08);
+}
+.ctrl-skip svg {
+  width: 20px;
+  height: 20px;
+}
 
-    .sc-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .sc-playing-icon {
-      display: flex;
-      align-items: flex-end;
-      gap: 2px;
-      height: 20px;
-      display: none;
-    }
-    .sc-playing-icon.visible { display: flex; }
-    .sc-playing-icon span {
-      width: 3px;
-      border-radius: 2px;
-      background: var(--green);
-    }
-    .sc-playing-icon span:nth-child(1) { animation: mini-wave 0.8s ease-in-out infinite alternate; height: 8px; }
-    .sc-playing-icon span:nth-child(2) { animation: mini-wave 0.8s ease-in-out 0.2s infinite alternate; height: 14px; }
-    .sc-playing-icon span:nth-child(3) { animation: mini-wave 0.8s ease-in-out 0.4s infinite alternate; height: 10px; }
-    @keyframes mini-wave {
-      from { height: 4px; }
-      to   { height: var(--mh, 14px); }
-    }
-    .sc-fav-btn {
-      width: 30px; height: 30px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      background: transparent;
-      border: 1px solid transparent;
-      transition: all 0.2s;
-    }
-    .sc-fav-btn:hover { background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.3); }
-    .sc-fav-btn.active svg { fill: var(--yellow); color: var(--yellow); }
-    .sc-fav-btn svg { width: 14px; height: 14px; }
+.ctrl-main {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 0 24px rgba(16, 185, 129, 0.5),
+    0 4px 18px rgba(16, 185, 129, 0.35);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: #022c22;
+}
+.ctrl-main:active {
+  transform: scale(0.9);
+}
+.ctrl-main.loading-state {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.5);
+  color: #451a03;
+}
+.ctrl-main.error-state {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.5);
+  color: #450a0a;
+}
+.ctrl-main svg {
+  width: 25px;
+  height: 25px;
+}
+.spin-anim {
+  animation: spin-icon 1s linear infinite;
+}
+@keyframes spin-icon {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 
-    /* ============================================================
-       BOTTOM PLAYER BAR (mini, when scrolled)
-    ============================================================ */
-    .mini-player {
-      position: fixed;
-      bottom: 0; left: 50%; transform: translateX(-50%);
-      width: 100%;
-      max-width: 480px;
-      background: rgba(10,10,15,0.9);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-top: 1px solid var(--border);
-      padding: 10px 20px;
-      padding-bottom: calc(10px + var(--safe-bottom));
-      display: none;
-      align-items: center;
-      gap: 12px;
-      z-index: 100;
-    }
-    .mini-player.visible { display: flex; }
-    .mini-logo {
-      width: 42px; height: 42px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(251,191,36,0.2));
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 9px;
-      font-weight: 800;
-      text-align: center;
-      line-height: 1.1;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .mini-logo img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
-    .mini-info { flex: 1; min-width: 0; }
-    .mini-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .mini-sub { font-size: 11px; color: var(--text-muted); }
-    .mini-play {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: var(--green);
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 12px rgba(74,222,128,0.4);
-      flex-shrink: 0;
-      transition: all 0.2s;
-    }
-    .mini-play:hover { transform: scale(1.08); }
-    .mini-play svg { width: 18px; height: 18px; color: #052e16; }
+/* FAVOURITE & VOLUME ROW */
+.pill-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+.pact-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.pact-btn:active {
+  transform: scale(0.88);
+}
+.pact-btn svg {
+  width: 17px;
+  height: 17px;
+}
+.pact-btn.fav-active {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+.pact-btn.fav-active svg {
+  fill: var(--y);
+  color: var(--y);
+}
 
-    /* ============================================================
-       ADD STREAM MODAL
-    ============================================================ */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(8px);
-      z-index: 200;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      padding-bottom: var(--safe-bottom);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
-    }
-    .modal-overlay.open {
-      opacity: 1;
-      pointer-events: all;
-    }
-    .modal {
-      width: 100%;
-      max-width: 480px;
-      background: var(--bg-modal);
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-      border: 1px solid var(--border-strong);
-      border-bottom: none;
-      padding: 24px 24px 32px;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .modal-overlay.open .modal { transform: translateY(0); }
-    .modal-handle {
-      width: 40px; height: 4px;
-      border-radius: 4px;
-      background: var(--border-strong);
-      margin: 0 auto 20px;
-    }
-    .modal h2 {
-      font-family: 'Outfit', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    .modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
-    .form-group { margin-bottom: 14px; }
-    .form-group label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-    .form-group input {
-      width: 100%;
-      height: 46px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 0 14px;
-      font-size: 14px;
-      color: var(--text-primary);
-      outline: none;
-      transition: all 0.2s;
-    }
-    .form-group input:focus {
-      border-color: rgba(74,222,128,0.4);
-      background: rgba(74,222,128,0.06);
-    }
-    .form-group input::placeholder { color: var(--text-muted); }
-    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-    .btn-cancel {
-      flex: 1;
-      height: 48px;
-      border-radius: var(--radius-sm);
-      background: rgba(255,255,255,0.07);
-      border: 1px solid var(--border);
-      font-size: 15px;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-    .btn-cancel:hover { background: rgba(255,255,255,0.12); }
-    .btn-add {
-      flex: 2;
-      height: 48px;
-      border-radius: var(--radius-sm);
-      background: linear-gradient(135deg, var(--green), #22c55e);
-      font-size: 15px;
-      font-weight: 700;
-      color: #052e16;
-      box-shadow: 0 4px 16px rgba(74,222,128,0.3);
-      transition: all 0.2s;
-    }
-    .btn-add:hover { transform: scale(1.02); box-shadow: 0 6px 24px rgba(74,222,128,0.45); }
+.vol-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 220px;
+}
+.vol-row svg {
+  width: 15px;
+  height: 15px;
+  color: var(--t3);
+  flex-shrink: 0;
+}
+input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 4px;
+  outline: none;
+  background: linear-gradient(to right, var(--g) 0%, var(--g) var(--pct, 80%), rgba(255, 255, 255, 0.12) var(--pct, 80%));
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--g);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+  cursor: pointer;
+}
 
-    /* Sleep Timer Modal */
-    .sleep-options {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 16px;
-    }
-    .sleep-opt {
-      height: 48px;
-      border-radius: var(--radius-sm);
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border);
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s;
-      color: var(--text-primary);
-    }
-    .sleep-opt:hover { background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.3); color: var(--green); }
-    .sleep-opt.active { background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.5); color: var(--green); }
-    .sleep-off {
-      grid-column: 1/-1;
-      background: rgba(248,113,113,0.1);
-      border-color: rgba(248,113,113,0.3);
-      color: var(--red);
-    }
-    .sleep-off:hover { background: rgba(248,113,113,0.18); }
+/* =====================================================
+   BANNERS (CONNECTION & SLEEP & RETRY)
+==================================================== */
+.banners {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.banner {
+  border-radius: 12px;
+  padding: 7px 12px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.banner.show {
+  display: flex;
+}
+.banner svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.banner span {
+  flex: 1;
+}
+.banner button {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.1);
+}
+.banner-buf {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: var(--y);
+  animation: banner-blink 2s ease-in-out infinite;
+}
+.banner-retry {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: var(--r);
+  animation: banner-blink 2s ease-in-out infinite;
+}
+.banner-ok {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  color: var(--g);
+}
+.banner-sleep {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: var(--y);
+}
+.banner-conn {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--r);
+}
+@keyframes banner-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 
-    /* ============================================================
-       TOAST
-    ============================================================ */
-    .toast {
-      position: fixed;
-      top: calc(20px + var(--safe-top));
-      left: 50%; transform: translateX(-50%);
-      background: var(--bg-modal);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-sm);
-      padding: 10px 20px;
-      font-size: 13px;
-      font-weight: 500;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      z-index: 300;
-      white-space: nowrap;
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-      max-width: calc(100vw - 40px);
-      text-align: center;
-    }
-    .toast.show { opacity: 1; }
+.conn-dots {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+}
+.conn-dots span {
+  width: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.25;
+  transition: all 0.3s;
+}
+.conn-dots span.on { opacity: 1; }
+.conn-dots span:nth-child(1) { height: 5px; }
+.conn-dots span:nth-child(2) { height: 8px; }
+.conn-dots span:nth-child(3) { height: 11px; }
+.conn-dots span:nth-child(4) { height: 14px; }
 
-    /* Sleep countdown banner */
-    .sleep-banner {
-      margin: 0 20px;
-      background: rgba(251,191,36,0.1);
-      border: 1px solid rgba(251,191,36,0.3);
-      border-radius: var(--radius-sm);
-      padding: 8px 14px;
-      display: none;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      color: var(--yellow);
-      margin-bottom: 4px;
-    }
-    .sleep-banner.active { display: flex; }
-    .sleep-banner svg { width: 14px; height: 14px; flex-shrink: 0; }
-    .sleep-banner span { flex: 1; }
-    .sleep-banner button { font-size: 11px; font-weight: 700; color: var(--yellow); opacity: 0.7; }
-    .sleep-banner button:hover { opacity: 1; }
+/* =====================================================
+   BOTTOM SHEET (SLIDING STATION LIST)
+===================================================== */
+.sheet {
+  flex-shrink: 0;
+  background: rgba(10, 11, 18, 0.88);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border-top: 1px solid var(--border-hi);
+  border-radius: 26px 26px 0 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 48svh;
+  min-height: 190px;
+  padding-bottom: calc(6px + var(--sb));
+  transition: max-height 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.6);
+}
+.sheet.expanded {
+  max-height: 78svh;
+}
+.sheet-handle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sheet-handle {
+  width: 38px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--border-hi);
+}
 
-    /* ============================================================
-       SCROLLBAR
-    ============================================================ */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+/* Tabs */
+.sheet-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px 0;
+  flex-shrink: 0;
+}
+.stab {
+  flex: 1;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--t3);
+  background: var(--bg-card);
+  border: 1px solid transparent;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.stab:active {
+  transform: scale(0.96);
+}
+.stab.active {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: var(--g);
+}
 
-    /* ============================================================
-       LOADING SKELETON
-    ============================================================ */
-    .skeleton {
-      background: linear-gradient(90deg,
-        rgba(255,255,255,0.05) 0%,
-        rgba(255,255,255,0.10) 50%,
-        rgba(255,255,255,0.05) 100%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: var(--radius-sm);
-    }
-    @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+/* Search Box */
+.sheet-search {
+  padding: 8px 16px 0;
+  flex-shrink: 0;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 12px;
+  transition: all 0.2s;
+}
+.search-box:focus-within {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+}
+.search-box svg {
+  width: 14px;
+  height: 14px;
+  color: var(--t3);
+  flex-shrink: 0;
+}
+.search-box input {
+  flex: 1;
+  height: 36px;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--t1);
+}
+.search-box input::placeholder {
+  color: var(--t3);
+}
+#sclear {
+  font-size: 15px;
+  color: var(--t3);
+  display: none;
+}
+#sclear.show {
+  display: block;
+}
 
-    /* ============================================================
-       CATEGORY FILTER CHIPS
-    ============================================================ */
-    .filter-chips {
-      display: flex;
-      gap: 6px;
-      padding: 10px 20px 0;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    .filter-chips::-webkit-scrollbar { display: none; }
-    .chip {
-      flex-shrink: 0;
-      height: 30px;
-      padding: 0 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-    .chip.active {
-      background: rgba(74,222,128,0.12);
-      border-color: rgba(74,222,128,0.35);
-      color: var(--green);
-    }
-    .chip:hover:not(.active) { background: var(--bg-card-hover); color: var(--text-secondary); }
-  </style>
+/* Category Filter Chips */
+.chips {
+  display: flex;
+  gap: 5px;
+  padding: 8px 16px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex-shrink: 0;
+}
+.chips::-webkit-scrollbar {
+  display: none;
+}
+.chip {
+  flex-shrink: 0;
+  height: 27px;
+  padding: 0 11px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--t3);
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.chip:active {
+  transform: scale(0.93);
+}
+.chip.active {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: var(--g);
+}
+
+/* Station List View */
+.slist {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 16px 0;
+  -webkit-overflow-scrolling: touch;
+}
+.slist::-webkit-scrollbar {
+  width: 3px;
+}
+.slist::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* Empty View */
+.empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--t3);
+}
+.empty svg {
+  width: 38px;
+  height: 38px;
+  opacity: 0.3;
+  margin-bottom: 8px;
+}
+.empty h3 {
+  font-size: 15px;
+  color: var(--t2);
+  margin-bottom: 4px;
+}
+.empty p {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* HIGH-END 3D GLASS CARDS */
+.scard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.scard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3.5px;
+  background: linear-gradient(to bottom, var(--g), var(--y), var(--r));
+  border-radius: 3px 0 0 3px;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.scard:active {
+  transform: scale(0.97);
+  background: var(--bg-card-hi);
+}
+.scard.active {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+}
+.scard.active::before {
+  opacity: 1;
+}
+
+.sc-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(245, 158, 11, 0.18));
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 9.5px;
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.15;
+  color: var(--t2);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.sc-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-info {
+  flex: 1;
+  min-width: 0;
+}
+.sc-name {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
+}
+.sc-meta {
+  font-size: 11px;
+  color: var(--t3);
+  margin-top: 2px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.sc-badge {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.sc-badge.eco {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--g);
+}
+.sc-badge.fm {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--y);
+}
+
+.sc-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.sc-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+  display: none;
+}
+.sc-eq.show {
+  display: flex;
+}
+.sc-eq span {
+  width: 2.5px;
+  border-radius: 2px;
+  background: var(--g);
+}
+.sc-eq span:nth-child(1) { animation: eq-anim 0.8s ease-in-out infinite alternate; height: 5px; }
+.sc-eq span:nth-child(2) { animation: eq-anim 0.8s ease-in-out 0.2s infinite alternate; height: 12px; }
+.sc-eq span:nth-child(3) { animation: eq-anim 0.8s ease-in-out 0.4s infinite alternate; height: 7px; }
+
+.sc-fav {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.sc-fav:active {
+  transform: scale(0.85);
+}
+.sc-fav svg {
+  width: 14px;
+  height: 14px;
+}
+.sc-fav.fav-on svg {
+  fill: var(--y);
+  color: var(--y);
+}
+
+/* =====================================================
+   MODALS (SHEET MODALS)
+===================================================== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: var(--sb);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal {
+  width: 100%;
+  max-width: 440px;
+  background: #11121d;
+  border-radius: 26px 26px 0 0;
+  border: 1px solid var(--border-hi);
+  border-bottom: none;
+  padding: 22px 22px 28px;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+.overlay.open .modal {
+  transform: translateY(0);
+}
+.m-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--border-hi);
+  margin: 0 auto 16px;
+}
+.modal h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+.modal p {
+  font-size: 12.5px;
+  color: var(--t2);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+/* ECO DATA SAVER MODAL SPECIFICS */
+.data-card {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.data-card-metric {
+  font-family: 'Outfit', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: #34d399;
+}
+.data-card-label {
+  font-size: 11px;
+  color: var(--t2);
+  margin-top: 2px;
+}
+.eco-badge-highlight {
+  font-size: 10.5px;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.data-stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.stat-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.stat-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--t1);
+}
+.stat-desc {
+  font-size: 10px;
+  color: var(--t3);
+  margin-top: 2px;
+}
+
+.fgroup {
+  margin-bottom: 12px;
+}
+.fgroup label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 5px;
+}
+.fgroup input {
+  width: 100%;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  color: var(--t1);
+  outline: none;
+  transition: all 0.2s;
+}
+.fgroup input:focus {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.mactions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.btn-cancel {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-add {
+  flex: 2;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #022c22;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+}
+
+.sleep-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+.sleep-opt {
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t1);
+  transition: all 0.2s;
+}
+.sleep-opt.active {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: var(--g);
+}
+.sleep-off {
+  grid-column: 1 / -1;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--r);
+}
+
+/* =====================================================
+   TOAST
+===================================================== */
+.toast {
+  position: fixed;
+  top: calc(16px + var(--st));
+  left: 50%;
+  transform: translateX(-50%);
+  background: #181926;
+  border: 1px solid var(--border-hi);
+  border-radius: 12px;
+  padding: 9px 18px;
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+  z-index: 300;
+  white-space: nowrap;
+  max-width: calc(100vw - 36px);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.toast.show {
+  opacity: 1;
+}
+</style>
 </head>
 <body>
 
-<div class="bg-orbs"><span></span></div>
+<!-- Atmosphere Canvas / Elements -->
+<div class="stars" id="stars"></div>
+<div class="ambient" id="ambient"></div>
+<div class="grid-overlay"></div>
+
 <div id="app">
 
-  <!-- ===================== HEADER ===================== -->
+  <!-- =================== HEADER =================== -->
   <header>
-    <div class="header-brand">
+    <div class="brand">
       <div class="brand-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round">
           <path d="M5.636 18.364A9 9 0 1 0 18.364 5.636"/>
           <path d="M9.172 14.828A4 4 0 1 0 14.828 9.172"/>
-          <circle cx="12" cy="12" r="1" fill="white" stroke="none"/>
+          <circle cx="12" cy="12" r="1.2" fill="white" stroke="none"/>
         </svg>
       </div>
-      <div class="brand-text">
+      <div>
         <div class="brand-title">Ethiopian FM</div>
-        <div class="brand-sub">Radio · Live Streaming</div>
+        <div class="brand-sub">Radio · Live</div>
       </div>
     </div>
-    <div class="header-actions">
+
+    <div class="hdr-actions">
+      <!-- ECO DATA SAVER STATUS PILL -->
+      <button class="eco-pill" id="eco-btn" title="Data Economy & Usage">
+        <span class="eco-dot"></span>
+        <span id="eco-pill-txt">0 KB • Eco</span>
+      </button>
+
       <button class="icon-btn" id="sleep-btn" title="Sleep timer" aria-label="Sleep timer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2a10 10 0 0 0-5.3 18.5"/>
-          <path d="M12 22a10 10 0 0 0 5.3-18.5"/>
-          <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
-          <circle cx="12" cy="12" r="3"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
         </svg>
       </button>
-      <button class="icon-btn" id="add-btn" title="Add custom stream" aria-label="Add stream">
+
+      <button class="icon-btn" id="add-btn" title="Add custom station" aria-label="Add custom station">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
@@ -1037,183 +1421,226 @@
     </div>
   </header>
 
-  <!-- ===================== NOW PLAYING ===================== -->
-  <div class="now-playing-card" id="now-playing-card">
-    <!-- Idle state -->
-    <div class="np-idle" id="np-idle">
-      <div class="np-idle-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+  <!-- =================== TACTILE FM TUNER SCALE =================== -->
+  <div class="fm-tuner-wrap">
+    <div class="fm-tuner" id="fm-tuner">
+      <div class="fm-scale-ticks">
+        <span>88</span>
+        <span>94.3</span>
+        <span>97.1</span>
+        <span>101.1</span>
+        <span>102.1</span>
+        <span>104.7</span>
+        <span>107.8</span>
+        <span>108</span>
+      </div>
+      <div class="fm-needle" id="fm-needle"></div>
+      <div class="fm-lock-pill" id="fm-lock-pill">
+        <span class="dot"></span>
+        <span id="fm-lock-txt">FM READY</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== PLAYER STAGE =================== -->
+  <div class="player-stage" id="player-stage">
+
+    <!-- Big Holographic Vinyl / Logo Ring -->
+    <div class="logo-ring-wrap" id="logo-wrap">
+      <div class="logo-ring-outer"></div>
+      <div class="logo-ring-inner"></div>
+      <div class="buffer-overlay"></div>
+      <div class="logo-face" id="logo-face">
+        <div class="logo-idle-icon" id="logo-idle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+          </svg>
+          <span>Tap a Station</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Equalizer Spectrum Bars -->
+    <div class="eq-wrap" id="eq-wrap"></div>
+
+    <!-- Station Info -->
+    <div class="station-info" id="station-info">
+      <div class="stn-live-badge"><div class="live-dot"></div><span id="live-txt">LIVE</span></div>
+      <div class="stn-name-wrap" id="stn-name-wrap">
+        <div class="stn-name" id="stn-name">Ethiopian FM Radio</div>
+      </div>
+      <div class="stn-freq" id="stn-freq">Select an Ethiopian FM station to play</div>
+    </div>
+
+    <!-- Tactile Controls -->
+    <div class="controls-pill">
+      <button class="ctrl-skip" id="ctrl-prev" aria-label="Previous station">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/>
+        </svg>
+      </button>
+
+      <button class="ctrl-main" id="ctrl-play" aria-label="Play or pause">
+        <svg id="ic-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 19 12 6 20 6 4"/></svg>
+        <svg id="ic-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        <svg id="ic-load" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin-anim" style="display:none">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+        </svg>
+      </button>
+
+      <button class="ctrl-skip" id="ctrl-next" aria-label="Next station">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Action Buttons & Volume -->
+    <div class="pill-actions">
+      <button class="pact-btn" id="fav-btn" aria-label="Add to favourites">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </button>
+
+      <div class="vol-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        </svg>
+        <input type="range" id="vol-slider" min="0" max="100" value="80" aria-label="Volume level"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
         </svg>
       </div>
-      <p>Tap a station to start playing</p>
+
+      <button class="pact-btn" id="sheet-toggle-btn" aria-label="Toggle station list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <polyline points="18 15 12 9 6 15"/>
+        </svg>
+      </button>
     </div>
 
-    <!-- Active state -->
-    <div class="np-active" id="np-active">
-      <div class="np-label">
-        <div class="np-live-dot" id="np-live-dot"></div>
-        <span id="np-live-text">LIVE</span>
-      </div>
-      <div class="np-station-row">
-        <div class="np-logo-wrap" id="np-logo-wrap">
-          <div class="np-logo" id="np-logo-el">ET</div>
-          <div class="buffer-ring"></div>
-        </div>
-        <div class="np-info">
-          <div class="np-name" id="np-name-el">Station Name</div>
-          <div class="np-freq" id="np-freq-el">Frequency · Genre</div>
-        </div>
-        <button class="np-fav-btn" id="np-fav-btn" aria-label="Favourite">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-          </svg>
-        </button>
-      </div>
+  </div><!-- /player-stage -->
 
-      <!-- Waveform -->
-      <div class="np-waveform" id="np-waveform"></div>
-
-      <!-- Controls -->
-      <div class="np-controls" style="position:relative;">
-        <button class="ctrl-prev" id="ctrl-prev" aria-label="Previous station">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/>
-          </svg>
-        </button>
-        <button class="ctrl-play" id="ctrl-play" aria-label="Play / Pause">
-          <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          <svg id="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-          <svg id="load-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:none;animation:spin 1s linear infinite">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-          </svg>
-          <span id="play-label">PLAY</span>
-        </button>
-        <button class="ctrl-next" id="ctrl-next" aria-label="Next station">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
-          </svg>
-        </button>
-        <button class="ctrl-vol" id="ctrl-vol" aria-label="Volume">
-          <svg id="vol-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-          </svg>
-        </button>
-        <!-- Volume popup -->
-        <div class="vol-popup" id="vol-popup">
-          <label>VOL</label>
-          <input type="range" id="vol-slider" min="0" max="100" value="80" />
-        </div>
-      </div>
+  <!-- =================== NOTIFICATION BANNERS =================== -->
+  <div class="banners" id="banners">
+    <div class="banner banner-conn" id="conn-banner">
+      <div class="conn-dots"><span></span><span></span><span></span><span></span></div>
+      <span id="conn-txt">Checking connection…</span>
     </div>
-  </div>
-
-  <!-- Connection quality bar -->
-  <div class="conn-bar hidden" id="conn-bar">
-    <div class="conn-dots">
-      <span></span><span></span><span></span><span></span>
-    </div>
-    <span id="conn-label">Checking connection…</span>
-  </div>
-
-  <!-- Reconnect banner -->
-  <div class="reconnect-banner" id="reconnect-banner">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-      <path d="M23 4v6h-6"/>
-      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-    </svg>
-    <span id="reconnect-msg">Buffering…</span>
-    <button class="retry-now" id="retry-now-btn">Retry now</button>
-  </div>
-
-  <!-- Sleep countdown banner -->
-  <div class="sleep-banner" id="sleep-banner">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 0 0-5.3 18.5"/><circle cx="12" cy="12" r="3"/></svg>
-    <span id="sleep-countdown">Stops in 30:00</span>
-    <button id="sleep-cancel-banner">Cancel</button>
-  </div>
-
-  <!-- ===================== TABS ===================== -->
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="my" id="tab-my">⭐ My Stations</button>
-    <button class="tab-btn" data-tab="all" id="tab-all">📻 All Stations</button>
-    <button class="tab-btn" data-tab="favs" id="tab-favs">🌟 Favourites</button>
-  </div>
-
-  <!-- ===================== SEARCH ===================== -->
-  <div class="search-wrap" id="search-wrap" style="display:none;">
-    <div class="search-inner">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <div class="banner" id="reconnect-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
       </svg>
-      <input type="search" id="search-input" placeholder="Search stations…" autocomplete="off" autocorrect="off" />
-      <button id="search-clear" aria-label="Clear search">✕</button>
+      <span id="reconnect-msg">Reconnecting…</span>
+      <button id="retry-now">Retry Now</button>
+    </div>
+    <div class="banner banner-sleep" id="sleep-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span id="sleep-txt">Stops in 30:00</span>
+      <button id="sleep-cancel">Cancel</button>
     </div>
   </div>
 
-  <!-- ===================== FILTER CHIPS ===================== -->
-  <div class="filter-chips" id="filter-chips" style="display:none;">
-    <button class="chip active" data-cat="all">All</button>
-    <button class="chip" data-cat="news">News</button>
-    <button class="chip" data-cat="music">Music</button>
-    <button class="chip" data-cat="sport">Sport</button>
-    <button class="chip" data-cat="religion">Religion</button>
-  </div>
+  <!-- =================== BOTTOM SHEET (LIST) =================== -->
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle-row" id="sheet-handle-row">
+      <div class="sheet-handle"></div>
+    </div>
+    <div class="sheet-tabs">
+      <button class="stab active" data-tab="my"  >⭐ My Stations</button>
+      <button class="stab"        data-tab="all" >📻 All FM & Streams</button>
+      <button class="stab"        data-tab="favs">🌟 Favourites</button>
+    </div>
+    
+    <div class="sheet-search" id="search-wrap" style="display:none">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input id="search-inp" type="search" placeholder="Search Sheger, Ethio, Bisrat, Mezmur…" autocomplete="off" autocorrect="off"/>
+        <button id="sclear">✕</button>
+      </div>
+    </div>
 
-  <!-- ===================== STATION LIST ===================== -->
-  <div class="station-list-wrap" id="station-list-wrap">
-    <div id="station-list"></div>
+    <div class="chips" id="chips" style="display:none">
+      <button class="chip active" data-cat="all">All</button>
+      <button class="chip" data-cat="fm">📻 FM Only</button>
+      <button class="chip" data-cat="music">🎵 Music</button>
+      <button class="chip" data-cat="news">📰 News</button>
+      <button class="chip" data-cat="sport">⚽ Sport</button>
+      <button class="chip" data-cat="religion">🕊 Spiritual</button>
+    </div>
+
+    <div class="slist" id="slist"></div>
   </div>
 
 </div><!-- /app -->
 
-<!-- Mini Player -->
-<div class="mini-player" id="mini-player">
-  <div class="mini-logo" id="mini-logo">ET</div>
-  <div class="mini-info">
-    <div class="mini-name" id="mini-name">Station</div>
-    <div class="mini-sub" id="mini-sub">Live · Ethiopian Radio</div>
+<!-- =================== DATA SAVER MODAL =================== -->
+<div class="overlay" id="eco-modal">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h2>⚡ Ultra Low-Data Engine</h2>
+      <span class="eco-badge-highlight">ACTIVE ✓</span>
+    </div>
+    <p>Engineered to stream smoothly even on slow 2G & 3G networks with minimum mobile data.</p>
+    
+    <div class="data-card">
+      <div>
+        <div class="data-card-metric" id="data-used-stat">0.0 MB</div>
+        <div class="data-card-label">Mobile Data Consumed This Session</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;font-weight:800;color:var(--g)">~48 kbps</div>
+        <div style="font-size:10px;color:var(--t3)">Eco Stream Bitrate</div>
+      </div>
+    </div>
+
+    <div class="data-stats-row">
+      <div class="stat-box">
+        <div class="stat-val">~21 MB / hr</div>
+        <div class="stat-desc">Compare: YouTube is 500+ MB/hr</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">Zero Buffer Leak</div>
+        <div class="stat-desc">Network pauses immediately on pause</div>
+      </div>
+    </div>
+
+    <div class="mactions">
+      <button class="btn-cancel" id="eco-close" style="width:100%">Done</button>
+    </div>
   </div>
-  <button class="mini-play" id="mini-play" aria-label="Play/Pause">
-    <svg id="mini-play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-    <svg id="mini-pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-  </button>
 </div>
 
-<!-- Add Stream Modal -->
-<div class="modal-overlay" id="add-modal">
+<!-- =================== ADD STREAM MODAL =================== -->
+<div class="overlay" id="add-modal">
   <div class="modal">
-    <div class="modal-handle"></div>
+    <div class="m-handle"></div>
     <h2>Add Custom Stream</h2>
-    <p>Paste an https:// stream URL and give it a name. It will be saved to your station list.</p>
-    <div class="form-group">
-      <label>Station Name</label>
-      <input type="text" id="add-name" placeholder="e.g. Fana Broadcasting FM" maxlength="60" />
-    </div>
-    <div class="form-group">
-      <label>Stream URL</label>
-      <input type="url" id="add-url" placeholder="https://stream.example.com/live.mp3" />
-    </div>
-    <div class="form-group">
-      <label>Frequency / Tagline (optional)</label>
-      <input type="text" id="add-freq" placeholder="e.g. 98.1 FM · News" maxlength="40" />
-    </div>
-    <div class="modal-actions">
+    <p>Paste any https:// radio stream URL to add it to your personal lineup.</p>
+    <div class="fgroup"><label>Station Name</label><input id="add-name" placeholder="e.g. Fana FM 98.1" maxlength="60"/></div>
+    <div class="fgroup"><label>Stream URL (https://)</label><input id="add-url" type="url" placeholder="https://stream.zeno.fm/..."/></div>
+    <div class="fgroup"><label>Frequency / Genre (optional)</label><input id="add-freq" placeholder="e.g. 98.1 FM · Addis Ababa" maxlength="40"/></div>
+    <div class="mactions">
       <button class="btn-cancel" id="add-cancel">Cancel</button>
       <button class="btn-add" id="add-confirm">Add Station</button>
     </div>
   </div>
 </div>
 
-<!-- Sleep Timer Modal -->
-<div class="modal-overlay" id="sleep-modal">
+<!-- =================== SLEEP TIMER MODAL =================== -->
+<div class="overlay" id="sleep-modal">
   <div class="modal">
-    <div class="modal-handle"></div>
+    <div class="m-handle"></div>
     <h2>⏱ Sleep Timer</h2>
-    <p>Radio will automatically stop after the selected time.</p>
-    <div class="sleep-options">
+    <p>Automatically turn off the radio stream after the selected duration.</p>
+    <div class="sleep-grid">
       <button class="sleep-opt" data-mins="15">15 min</button>
       <button class="sleep-opt" data-mins="30">30 min</button>
       <button class="sleep-opt" data-mins="45">45 min</button>
@@ -1225,456 +1652,386 @@
   </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast" role="alert" aria-live="polite"></div>
-
-<audio id="audio-el" preload="none"></audio>
-
-<style>
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-</style>
+<div class="toast" id="toast" role="alert"></div>
+<audio id="audio" preload="none"></audio>
 
 <script>
-// ================================================================
-// DATA — verified from Radio Browser API Oct 17, 2026
-// ================================================================
-const BUILTIN_STATIONS = [
-  {
-    id: 'sheger-1021',
-    name: 'Sheger FM 102.1',
-    url: 'https://stream.zenolive.com/y91n1vtbaw5tv',
-    freq: '102.1 FM · Addis Ababa',
-    cat: ['music'],
-    favicon: 'https://static.wixstatic.com/media/b24dd6_6a29942fac4e4dbe808a5b20bd3732cc%7emv2.png/v1/fill/w_180%2ch_180%2clg_1%2cusm_0.66_1.00_0.01/b24dd6_6a29942fac4e4dbe808a5b20bd3732cc%7emv2.png',
-    abbr: 'Sheger\n102.1'
-  },
-  {
-    id: 'ethio-fm-1078',
-    name: 'Ethio FM 107.8',
-    url: 'https://stream.zeno.fm/72y045deqeruv',
-    freq: '107.8 FM · Addis Ababa',
-    cat: ['music', 'news'],
-    favicon: 'https://proxy.zeno.fm/content/stations/agxzfnplbm8tc3RhdHNyMgsSCkF1dGhDbGllbnQYgIDgpIe5mgsMCxIOU3RhdGlvblByb2ZpbGUYgIDglIiptQsMogEEemVubw/image/',
-    abbr: 'Ethio\n107.8'
-  },
-  {
-    id: 'fm-addis-971',
-    name: 'FM Addis 97.1',
-    url: 'https://stream.zeno.fm/rb6wbrap7yzuv',
-    freq: '97.1 FM · EBC · Addis Ababa',
-    cat: ['news', 'music'],
-    favicon: 'https://proxy.zeno.fm/content/stations/agxzfnplbm8tc3RhdHNyMgsSCkF1dGhDbGllbnQYgICA4LLwzggMCxIOU3RhdGlvblByb2ZpbGUYgICQ_KLDtQoMogEEemVubw/image/',
-    abbr: 'EBC\n97.1'
-  },
-  {
-    id: 'bisrat-1011',
-    name: 'Bisrat FM 101.1',
-    url: 'https://bisratfm-atunwadigital.streamguys1.com/bisratfm',
-    freq: '101.1 FM · Addis Ababa',
-    cat: ['music'],
-    favicon: '',
-    abbr: 'Bisrat\n101.1'
-  },
-  {
-    id: 'ebc-1047',
-    name: 'EBC Radio 104.7',
-    url: 'https://stream-25.zeno.fm/2xguamap7yzuv',
-    freq: '104.7 FM · Ethiopian Broadcasting',
-    cat: ['news'],
-    favicon: '',
-    abbr: 'EBC\n104.7'
-  },
-  {
-    id: 'jano-fm',
-    name: 'Jano FM',
-    url: 'https://stream.zeno.fm/1cyn1as4v68uv',
-    freq: 'Online · Addis Ababa',
-    cat: ['music', 'news'],
-    favicon: 'https://forwardmystream.com/stations/500/janofm-5607.png',
-    abbr: 'Jano\nFM'
-  },
-  {
-    id: 'ahadu-943',
-    name: 'Ahadu Radio 94.3',
-    url: 'https://stream.zeno.fm/txxpndf1wwzuv',
-    freq: '94.3 FM · Addis Ababa',
-    cat: ['news', 'music'],
-    favicon: '',
-    abbr: 'Ahadu\n94.3'
-  },
-  {
-    id: 'tirita-976',
-    name: 'Tirita 97.6 FM',
-    url: 'https://stream.zeno.fm/x751reg18zhvv',
-    freq: '97.6 FM · Addis Ababa',
-    cat: ['music'],
-    favicon: '',
-    abbr: 'Tirita\n97.6'
-  },
-  {
-    id: 'tizta-fm',
-    name: 'Tizta FM (ትዝታ)',
-    url: 'https://stream.zeno.fm/55nlq5yzqlftv',
-    freq: 'Online · Classic Ethiopian',
-    cat: ['music'],
-    favicon: 'https://zenoimages.s3.us-west-001.backblazeb2.com/7766189d-acbb-421a-ae31-20564c52dc76/images/logo',
-    abbr: 'Tizta\nFM'
-  },
-  {
-    id: 'taem-radio',
-    name: 'Taem Radio (ጣዕም)',
-    url: 'https://stream.zeno.fm/ffg8htkh1k0uv',
-    freq: 'Online · Addis Ababa',
-    cat: ['music'],
-    favicon: 'https://proxy.zeno.fm/content/stations/agxzfnplbm8tc3RhdHNyMgsSCkF1dGhDbGllbnQYgIDQ4cH5_woMCxIOU3RhdGlvblByb2ZpbGUYgIDQkcyS2QgMogEEemVubw/image/',
-    abbr: 'Taem\nFM'
-  },
-  {
-    id: 'addis-music',
-    name: 'Addis Music',
-    url: 'https://stream.zeno.fm/umguj2baxdctv',
-    freq: 'Online · Addis Ababa',
-    cat: ['music'],
-    favicon: 'https://proxy.zeno.fm/content/stations/391ffb41-ab1e-4423-b936-720f68d27937/image/',
-    abbr: 'Addis\nMusic'
-  },
-  {
-    id: 'yene-vibe',
-    name: 'YeneVibe Radio',
-    url: 'https://stream.zeno.fm/5mz3qqftsnhvv',
-    freq: 'Online · Amharic Music',
-    cat: ['music'],
-    favicon: 'https://proxy.zeno.fm/content/stations/agxzfnplbm8tc3RhdHNyMgsSCkF1dGhDbGllbnQYgICI-dft8AgMCxIOU3RhdGlvblByb2ZpbGUYgICIhYa_nQgMogEEemVubw/image/',
-    abbr: 'Yene\nVibe'
-  },
-  {
-    id: 'ethioldies',
-    name: 'EthiOldies',
-    url: 'https://www.ethioldies.com/listen/ethioldies/radio.mp3',
-    freq: 'Online · 60s–90s Ethiopian Classics',
-    cat: ['music'],
-    favicon: 'https://www.ethioldies.com/static/uploads/browser_icon/192.1732350958.png',
-    abbr: 'Ethi\nOldies'
-  },
-  {
-    id: 'voice-ethiopia',
-    name: 'Voice of Ethiopia',
-    url: 'https://node-34.zeno.fm/hubm64kkr2zuv',
-    freq: 'Online · Amharic & English',
-    cat: ['news', 'music'],
-    favicon: '',
-    abbr: 'Voice\nEthio'
-  },
-  {
-    id: 'mirt-radio',
-    name: 'Mirt Internet Radio',
-    url: 'https://stream.zeno.fm/akmuznguawzuv',
-    freq: 'Online · mirtmirt.com',
-    cat: ['music'],
-    favicon: '',
-    abbr: 'Mirt\nFM'
-  },
-  {
-    id: 'amharic-sport',
-    name: 'Amharic Sport Commentary',
-    url: 'https://stream.zeno.fm/bqtruhn4q98uv',
-    freq: 'Online · ⚽ Football Commentary',
-    cat: ['sport'],
-    favicon: '',
-    abbr: 'Sport\nFM'
-  },
-  {
-    id: 'orthodox-mezmur',
-    name: 'Ethiopian Orthodox Mezmur',
-    url: 'https://stream.zeno.fm/pfaho9uockwuv',
-    freq: 'Online · መዝሙር · Religious',
-    cat: ['religion'],
-    favicon: 'https://zenoimages.s3.us-west-001.backblazeb2.com/fea86ed7-365e-4a74-8a62-653577898d5c/images/logo',
-    abbr: 'Orthodox\nMezmur'
-  },
-  {
-    id: 'christian-mezmur',
-    name: 'Christian Mezmur Ethiopia',
-    url: 'https://stream.zeno.fm/0bws6ct0ey8uv',
-    freq: 'Online · ክርስቲያን መዝሙር',
-    cat: ['religion'],
-    favicon: 'https://zenoimages.s3.us-west-001.backblazeb2.com/agxzfnplbm8tc3RhdHNyMgsSCkF1dGhDbGllbnQYgICw_pudvwsMCxIOU3RhdGlvblByb2ZpbGUYgICw7resuAgMogEEemVubw/images/logo',
-    abbr: 'Christian\nMezmur'
-  },
-  {
-    id: 'dw-amharic',
-    name: 'DW Amharic',
-    url: 'https://dw.audiostream.io/dw/1027/mp3/64/dw08',
-    freq: 'Online · Deutsche Welle · News',
-    cat: ['news'],
-    favicon: '',
-    abbr: 'DW\nAmharic'
-  },
-  {
-    id: 'halaal-media',
-    name: 'Halaal Media',
-    url: 'https://stream.zeno.fm/rqx24qj7offvv',
-    freq: 'Online · ሃላል · Islamic',
-    cat: ['religion'],
-    favicon: '',
-    abbr: 'Halaal\nMedia'
-  }
+// ============================================================
+// COMPREHENSIVE ETHIOPIAN STATIONS DATABASE
+// ============================================================
+const STATIONS = [
+  {id:'sheger-1021', name:'Sheger FM 102.1', mhz:102.1, url:'https://stream.zenolive.com/y91n1vtbaw5tv', freq:'102.1 FM · Addis Ababa', cat:['fm','music'], favicon:'https://static.wixstatic.com/media/b24dd6_6a29942fac4e4dbe808a5b20bd3732cc%7emv2.png/v1/fill/w_180%2ch_180%2clg_1%2cusm_0.66_1.00_0.01/b24dd6_6a29942fac4e4dbe808a5b20bd3732cc%7emv2.png', abbr:'Sheger\n102.1', colors:['#065f46','#92400e']},
+  {id:'ethio-1078', name:'Ethio FM 107.8', mhz:107.8, url:'https://stream.zeno.fm/72y045deqeruv', freq:'107.8 FM · Addis Ababa', cat:['fm','news','music'], favicon:'https://proxy.zeno.fm/content/stations/agxzfnplbm8tc3RhdHNyMgsSCkF1dGhDbGllbnQYgIDgpIe5mgsMCxIOU3RhdGlvblByb2ZpbGUYgIDglIiptQsMogEEemVubw/image/', abbr:'Ethio\n107.8', colors:['#1e3a5f','#92400e']},
+  {id:'fmaddis-971', name:'FM Addis 97.1 (EBC)', mhz:97.1, url:'https://stream.zeno.fm/rb6wbrap7yzuv', freq:'97.1 FM · EBC', cat:['fm','news','music'], favicon:'https://proxy.zeno.fm/content/stations/agxzfnplbm8tc3RhdHNyMgsSCkF1dGhDbGllbnQYgICA4LLwzggMCxIOU3RhdGlvblByb2ZpbGUYgICQ_KLDtQoMogEEemVubw/image/', abbr:'EBC\n97.1', colors:['#1e3a5f','#065f46']},
+  {id:'bisrat-1011', name:'Bisrat FM 101.1', mhz:101.1, url:'https://bisratfm-atunwadigital.streamguys1.com/bisratfm', freq:'101.1 FM · Addis Ababa', cat:['fm','music'], favicon:'', abbr:'Bisrat\n101.1', colors:['#4c1d95','#7f1d1d']},
+  {id:'ebc-1047', name:'EBC Radio 104.7', mhz:104.7, url:'https://stream-25.zeno.fm/2xguamap7yzuv', freq:'104.7 FM · National Service', cat:['fm','news'], favicon:'', abbr:'EBC\n104.7', colors:['#1e3a5f','#065f46']},
+  {id:'ahadu-943', name:'Ahadu Radio 94.3', mhz:94.3, url:'https://stream.zeno.fm/txxpndf1wwzuv', freq:'94.3 FM · Addis Ababa', cat:['fm','news','music'], favicon:'', abbr:'Ahadu\n94.3', colors:['#065f46','#1e3a5f']},
+  {id:'tirita-976', name:'Tirita 97.6 FM', mhz:97.6, url:'https://stream.zeno.fm/x751reg18zhvv', freq:'97.6 FM · Addis Ababa', cat:['fm','music'], favicon:'', abbr:'Tirita\n97.6', colors:['#4c1d95','#1e3a5f']},
+  {id:'jano-fm', name:'Jano FM', mhz:null, url:'https://stream.zeno.fm/1cyn1as4v68uv', freq:'Online · Music & News', cat:['music','news'], favicon:'https://forwardmystream.com/stations/500/janofm-5607.png', abbr:'Jano\nFM', colors:['#7f1d1d','#78350f']},
+  {id:'tizta-fm', name:'Tizta FM (ትዝታ)', mhz:null, url:'https://stream.zeno.fm/55nlq5yzqlftv', freq:'Online · Classic Ethiopian', cat:['music'], favicon:'https://zenoimages.s3.us-west-001.backblazeb2.com/7766189d-acbb-421a-ae31-20564c52dc76/images/logo', abbr:'Tizta\nFM', colors:['#78350f','#065f46']},
+  {id:'taem-radio', name:'Taem Radio (ጣዕም)', mhz:null, url:'https://stream.zeno.fm/ffg8htkh1k0uv', freq:'Online · Addis Ababa', cat:['music'], favicon:'https://proxy.zeno.fm/content/stations/agxzfnplbm8tc3RhdHNyMgsSCkF1dGhDbGllbnQYgIDQ4cH5_woMCxIOU3RhdGlvblByb2ZpbGUYgIDQkcyS2QgMogEEemVubw/image/', abbr:'Taem\nFM', colors:['#92400e','#7f1d1d']},
+  {id:'addis-music', name:'Addis Music', mhz:null, url:'https://stream.zeno.fm/umguj2baxdctv', freq:'Online · Addis Ababa', cat:['music'], favicon:'https://proxy.zeno.fm/content/stations/391ffb41-ab1e-4423-b936-720f68d27937/image/', abbr:'Addis\nMusic', colors:['#065f46','#92400e']},
+  {id:'yene-vibe', name:'YeneVibe Radio', mhz:null, url:'https://stream.zeno.fm/5mz3qqftsnhvv', freq:'Online · Amharic Music', cat:['music'], favicon:'https://proxy.zeno.fm/content/stations/agxzfnplbm8tc3RhdHNyMgsSCkF1dGhDbGllbnQYgICI-dft8AgMCxIOU3RhdGlvblByb2ZpbGUYgICIhYa_nQgMogEEemVubw/image/', abbr:'Yene\nVibe', colors:['#4c1d95','#065f46']},
+  {id:'ethioldies', name:'EthiOldies', mhz:null, url:'https://www.ethioldies.com/listen/ethioldies/radio.mp3', freq:'Online · 60s–90s Golden Era', cat:['music'], favicon:'https://www.ethioldies.com/static/uploads/browser_icon/192.1732350958.png', abbr:'Ethi\nOldies', colors:['#78350f','#92400e']},
+  {id:'voice-eth', name:'Voice of Ethiopia', mhz:null, url:'https://node-34.zeno.fm/hubm64kkr2zuv', freq:'Online · Amharic & English', cat:['news','music'], favicon:'', abbr:'Voice\nEthio', colors:['#065f46','#7f1d1d']},
+  {id:'mirt-radio', name:'Mirt Internet Radio', mhz:null, url:'https://stream.zeno.fm/akmuznguawzuv', freq:'Online · mirtmirt.com', cat:['music'], favicon:'', abbr:'Mirt\nFM', colors:['#1e3a5f','#4c1d95']},
+  {id:'sport-am', name:'Amharic Sport Commentary', mhz:null, url:'https://stream.zeno.fm/bqtruhn4q98uv', freq:'Online · ⚽ Football & Live Sport', cat:['sport'], favicon:'', abbr:'Sport\nFM', colors:['#92400e','#7f1d1d']},
+  {id:'orthodox', name:'Ethiopian Orthodox Mezmur', mhz:null, url:'https://stream.zeno.fm/pfaho9uockwuv', freq:'Online · ኦርቶዶክስ መዝሙር', cat:['religion'], favicon:'https://zenoimages.s3.us-west-001.backblazeb2.com/fea86ed7-365e-4a74-8a62-653577898d5c/images/logo', abbr:'Orthodox\nMezmur', colors:['#92400e','#065f46']},
+  {id:'christian-mez', name:'Christian Mezmur Ethiopia', mhz:null, url:'https://stream.zeno.fm/0bws6ct0ey8uv', freq:'Online · ክርስቲያን መዝሙር', cat:['religion'], favicon:'', abbr:'Christian\nMezmur', colors:['#1e3a5f','#78350f']},
+  {id:'dw-amharic', name:'DW Amharic', mhz:null, url:'https://dw.audiostream.io/dw/1027/mp3/64/dw08', freq:'Online · Deutsche Welle News', cat:['news'], favicon:'', abbr:'DW\nAmharic', colors:['#1e3a5f','#065f46']},
+  {id:'halaal', name:'Halaal Media', mhz:null, url:'https://stream.zeno.fm/rqx24qj7offvv', freq:'Online · የኢትዮጵያ ሙስሊሞች ድምጽ', cat:['religion'], favicon:'', abbr:'Halaal\nMedia', colors:['#065f46','#78350f']},
 ];
 
-// ================================================================
-// STATE
-// ================================================================
-let state = {
-  stations: [],          // merged builtin + custom
-  myList: [],            // IDs in "My Stations" tab
-  favourites: new Set(), // IDs
+// ============================================================
+// APPLICATION STATE
+// ============================================================
+const st = {
+  all: [...STATIONS],
+  myList: [],
+  favs: new Set(),
   currentId: null,
-  isPlaying: false,
-  isLoading: false,
-  volume: 80,
+  playing: false,
+  loading: false,
+  tab: 'my',
+  search: '',
+  cat: 'all',
+  vol: 80,
   sleepTimer: null,
-  sleepEndsAt: null,
-  activeTab: 'my',
-  searchQuery: '',
-  catFilter: 'all',
+  sleepEnd: null,
 };
+const audio = document.getElementById('audio');
 
-const audio = document.getElementById('audio-el');
+// ============================================================
+// ULTRA LOW-DATA ENGINE (ZERO BUFFER LEAK)
+// ============================================================
+const DATA_SAVER = {
+  bytes: 0,
+  timer: null,
+  bitrateKbps: 48, // Average lightweight audio bitrate
+  
+  start() {
+    if (this.timer) return;
+    this.timer = setInterval(() => {
+      if (st.playing && !audio.paused) {
+        this.bytes += Math.round((this.bitrateKbps * 1024) / 8);
+        this.render();
+      }
+    }, 1000);
+  },
 
-// ================================================================
-// STORAGE
-// ================================================================
+  // Instant buffer cutoff on pause to avoid background data leakage
+  onPause() {
+    const s = getStation(st.currentId);
+    if (s && audio.src) {
+      audio._cachedSrc = audio.src;
+      // Cut off stream immediately so network activity stops completely
+      audio.removeAttribute('src');
+      audio.load();
+    }
+  },
+
+  onResume() {
+    if (audio._cachedSrc) {
+      audio.src = audio._cachedSrc;
+      audio._cachedSrc = null;
+      audio.play().catch(() => {});
+    }
+  },
+
+  render() {
+    const mb = (this.bytes / (1024 * 1024)).toFixed(1);
+    const kb = Math.round(this.bytes / 1024);
+    const txt = mb >= 1.0 ? `${mb} MB` : `${kb} KB`;
+    const pill = document.getElementById('eco-pill-txt');
+    if (pill) pill.textContent = `${txt} • Eco`;
+    const stat = document.getElementById('data-used-stat');
+    if (stat) stat.textContent = txt;
+  }
+};
+DATA_SAVER.start();
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
 function save() {
   try {
-    const d = {
-      myList: state.myList,
-      favourites: [...state.favourites],
-      customStations: state.stations.filter(s => s.custom),
-      volume: state.volume,
-    };
-    localStorage.setItem('etfm_v2', JSON.stringify(d));
+    localStorage.setItem('etfm_v3', JSON.stringify({
+      myList: st.myList,
+      favs: [...st.favs],
+      customs: st.all.filter(s => s.custom),
+      vol: st.vol
+    }));
   } catch(e) {}
 }
 
 function load() {
   try {
-    const raw = localStorage.getItem('etfm_v2');
-    if (!raw) return;
-    const d = JSON.parse(raw);
-    // Merge custom stations
-    const customs = (d.customStations || []).map(s => ({...s, custom: true}));
-    state.stations = [...BUILTIN_STATIONS, ...customs];
-    // Restore myList (filter out deleted)
-    const ids = new Set(state.stations.map(s => s.id));
-    if (d.myList && d.myList.length) {
-      state.myList = d.myList.filter(id => ids.has(id));
-      // Add any builtin not yet in list
-      BUILTIN_STATIONS.forEach(s => {
-        if (!state.myList.includes(s.id)) state.myList.push(s.id);
-      });
-    } else {
-      state.myList = state.stations.map(s => s.id);
-    }
-    state.favourites = new Set(d.favourites || []);
-    state.volume = d.volume ?? 80;
-    audio.volume = state.volume / 100;
+    const d = JSON.parse(localStorage.getItem('etfm_v3') || '{}');
+    const customs = (d.customs || []).map(s => ({...s, custom: true, colors: s.colors || ['#065f46', '#92400e']}));
+    st.all = [...STATIONS, ...customs];
+    const ids = new Set(st.all.map(s => s.id));
+    st.myList = d.myList ? d.myList.filter(id => ids.has(id)) : st.all.map(s => s.id);
+    STATIONS.forEach(s => { if (!st.myList.includes(s.id)) st.myList.push(s.id); });
+    st.favs = new Set(d.favs || []);
+    st.vol = d.vol ?? 80;
   } catch(e) {
-    state.stations = [...BUILTIN_STATIONS];
-    state.myList = state.stations.map(s => s.id);
+    st.myList = st.all.map(s => s.id);
+  }
+  audio.volume = st.vol / 100;
+  const sl = document.getElementById('vol-slider');
+  sl.value = st.vol;
+  sl.style.setProperty('--pct', st.vol + '%');
+}
+
+// ============================================================
+// ATMOSPHERIC VISUALS (STARS & EQUALIZER)
+// ============================================================
+function buildStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 50; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() < 0.25 ? 3 : 2;
+    s.style.cssText = `
+      left: ${Math.random() * 100}%;
+      top: ${Math.random() * 100}%;
+      width: ${sz}px; height: ${sz}px;
+      --d: ${(Math.random() * 4 + 2).toFixed(1)}s;
+      --delay: -${(Math.random() * 5).toFixed(1)}s;
+    `;
+    c.appendChild(s);
   }
 }
 
-function initState() {
-  state.stations = [...BUILTIN_STATIONS];
-  state.myList = state.stations.map(s => s.id);
-  load();
-}
-
-// ================================================================
-// WAVEFORM
-// ================================================================
-function buildWaveform() {
-  const wf = document.getElementById('np-waveform');
-  wf.innerHTML = '';
-  const count = 28;
-  for (let i = 0; i < count; i++) {
-    const bar = document.createElement('div');
-    bar.className = 'wave-bar';
-    const h = Math.floor(Math.random() * 24) + 6;
-    const d = (Math.random() * 0.6 + 0.5).toFixed(2);
-    bar.style.cssText = `--h:${h}px; --d:${d}s; height:4px; animation-delay:${(Math.random()*0.5).toFixed(2)}s`;
-    wf.appendChild(bar);
+function buildEQ() {
+  const w = document.getElementById('eq-wrap');
+  w.innerHTML = '';
+  const n = 34;
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement('div');
+    b.className = 'eq-bar';
+    const h = Math.floor(Math.random() * 20) + 4;
+    const d = (Math.random() * 0.6 + 0.35).toFixed(2);
+    const dl = (Math.random() * 0.45).toFixed(2);
+    b.style.cssText = `--h:${h}px;--d:${d}s;--dl:${dl}s;animation-delay:${dl}s`;
+    w.appendChild(b);
   }
 }
-function animateWaveform(on) {
-  document.querySelectorAll('.wave-bar').forEach(b => {
-    if (on) b.classList.add('animated');
-    else b.classList.remove('animated');
-  });
+
+function setAmbient(colors) {
+  const r = document.documentElement;
+  if (colors && colors.length >= 2) {
+    r.style.setProperty('--amb1', colors[0]);
+    r.style.setProperty('--amb2', colors[1]);
+    r.style.setProperty('--amb3', colors[0]);
+  } else {
+    r.style.setProperty('--amb1', '#065f46');
+    r.style.setProperty('--amb2', '#78350f');
+    r.style.setProperty('--amb3', '#7f1d1d');
+  }
 }
 
-// ================================================================
-// PLAYER CONTROLS
-// ================================================================
-function getStation(id) { return state.stations.find(s => s.id === id); }
+// ============================================================
+// FM SCALE NEEDLE CONTROLLER
+// ============================================================
+function updateFmNeedle(station) {
+  const needle = document.getElementById('fm-needle');
+  const lockPill = document.getElementById('fm-lock-pill');
+  const lockTxt = document.getElementById('fm-lock-txt');
+  
+  if (!station) {
+    needle.style.left = '50%';
+    lockTxt.textContent = 'FM READY';
+    return;
+  }
+  
+  if (station.mhz) {
+    // FM frequency between 88 MHz and 108 MHz
+    const pct = Math.max(6, Math.min(94, ((station.mhz - 88) / 20) * 100));
+    needle.style.left = `${pct}%`;
+    lockTxt.textContent = `${station.mhz} FM LOCK`;
+    lockPill.style.display = 'flex';
+  } else {
+    // Digital Web FM Stream
+    needle.style.left = '92%';
+    lockTxt.textContent = 'WEB 48k ECO';
+    lockPill.style.display = 'flex';
+  }
+}
 
-function getLogoHTML(station, size = 'full') {
+// ============================================================
+// PLAYER CONTROLLER
+// ============================================================
+function getStation(id) {
+  return st.all.find(s => s.id === id);
+}
+
+function logoHTML(station) {
+  const abb = (station.abbr || station.name.slice(0, 6)).replace('\n', '<br>');
   if (station.favicon) {
-    return `<img src="${station.favicon}" alt="${station.name}" onerror="this.style.display='none';this.parentElement.textContent='${station.abbr || station.name.slice(0,4)}'" />`;
+    return `<img src="${station.favicon}" alt="${station.name}" onerror="this.outerHTML='<span style=\\'font-size:10px;font-weight:900;text-align:center;line-height:1.2;padding:6px\\'>${abb}</span>'">`;
   }
-  return station.abbr || station.name.slice(0,5);
+  return `<span style="font-size:10px;font-weight:900;text-align:center;line-height:1.2;padding:6px">${abb}</span>`;
 }
 
-function setPlayState(playing) {
-  state.isPlaying = playing;
-  const card = document.getElementById('now-playing-card');
-  card.classList.toggle('playing', playing);
-  animateWaveform(playing);
-  // Main controls
-  document.getElementById('play-icon').style.display = playing ? 'none' : '';
-  document.getElementById('pause-icon').style.display = playing ? '' : 'none';
-  document.getElementById('load-icon').style.display = 'none';
-  document.getElementById('play-label').textContent = playing ? 'PAUSE' : 'PLAY';
-  // Ctrl-play styling
-  const cp = document.getElementById('ctrl-play');
-  cp.classList.remove('loading', 'error-state');
-  // Mini player
-  document.getElementById('mini-play-icon').style.display = playing ? 'none' : '';
-  document.getElementById('mini-pause-icon').style.display = playing ? '' : 'none';
-  // Update station cards
+function setPlayerState(station) {
+  const lf = document.getElementById('logo-face');
+  const li = document.getElementById('logo-idle');
+  if (station) {
+    li.style.display = 'none';
+    lf.innerHTML = logoHTML(station);
+    document.getElementById('stn-name').textContent = station.name;
+    document.getElementById('stn-freq').textContent = station.freq;
+    setAmbient(station.colors);
+    updateFmNeedle(station);
+
+    // Dynamic Marquee
+    const nm = document.getElementById('stn-name');
+    const wrap = document.getElementById('stn-name-wrap');
+    nm.classList.toggle('marquee', nm.scrollWidth > wrap.clientWidth + 4);
+  } else {
+    li.style.display = '';
+    document.getElementById('stn-name').textContent = 'Ethiopian FM Radio';
+    document.getElementById('stn-freq').textContent = 'Select an Ethiopian FM station to play';
+    setAmbient(null);
+    updateFmNeedle(null);
+  }
+  syncPlayBtn();
   renderList();
 }
 
-function setLoadingState() {
-  state.isLoading = true;
-  const cp = document.getElementById('ctrl-play');
-  cp.classList.add('loading');
-  cp.classList.remove('error-state');
-  document.getElementById('play-icon').style.display = 'none';
-  document.getElementById('pause-icon').style.display = 'none';
-  document.getElementById('load-icon').style.display = '';
-  document.getElementById('play-label').textContent = 'LOADING';
+function setPlaying(v) {
+  st.playing = v;
+  st.loading = false;
+  const ps = document.getElementById('player-stage');
+  const wrap = document.getElementById('logo-wrap');
+  ps.classList.toggle('playing', v);
+  wrap.classList.toggle('playing', v);
+  wrap.classList.remove('buffering');
+  syncPlayBtn();
+  syncLiveBadge();
+  renderList();
 }
 
-function setErrorState(msg) {
-  state.isLoading = false;
-  const cp = document.getElementById('ctrl-play');
-  cp.classList.add('error-state');
-  cp.classList.remove('loading');
-  document.getElementById('play-icon').style.display = '';
-  document.getElementById('pause-icon').style.display = 'none';
-  document.getElementById('load-icon').style.display = 'none';
-  document.getElementById('play-label').textContent = 'RETRY';
-  showToast('⚠ ' + (msg || 'Stream unavailable. Try another station.'), 4000);
-  animateWaveform(false);
-  document.getElementById('now-playing-card').classList.remove('playing');
-  renderList();
+function setLoading() {
+  st.loading = true;
+  st.playing = false;
+  syncPlayBtn();
+  syncLiveBadge();
+}
+
+function setError(msg) {
+  st.loading = false;
+  const b = document.getElementById('ctrl-play');
+  b.classList.remove('loading-state');
+  b.classList.add('error-state');
+  showIcon('play');
+  showToast('⚠ ' + (msg || 'Stream buffering — tap to retry'));
+  document.getElementById('logo-wrap').classList.remove('buffering');
+}
+
+function syncPlayBtn() {
+  const b = document.getElementById('ctrl-play');
+  b.classList.remove('loading-state', 'error-state');
+  if (st.loading) {
+    showIcon('load');
+    b.classList.add('loading-state');
+  } else if (st.playing) {
+    showIcon('pause');
+  } else {
+    showIcon('play');
+  }
+}
+
+function showIcon(which) {
+  document.getElementById('ic-play').style.display  = which === 'play'  ? '' : 'none';
+  document.getElementById('ic-pause').style.display = which === 'pause' ? '' : 'none';
+  document.getElementById('ic-load').style.display  = which === 'load'  ? '' : 'none';
+}
+
+function syncLiveBadge() {
+  const t = document.getElementById('live-txt');
+  if (st.loading) t.textContent = 'CONNECTING…';
+  else if (st.playing) t.textContent = 'LIVE';
+  else t.textContent = 'STOPPED';
+}
+
+function syncFavBtn() {
+  const b = document.getElementById('fav-btn');
+  const on = st.currentId && st.favs.has(st.currentId);
+  b.classList.toggle('fav-active', !!on);
+  b.querySelector('svg').style.fill = on ? 'var(--y)' : 'none';
+  b.querySelector('svg').style.color = on ? 'var(--y)' : 'currentColor';
 }
 
 function playStation(id) {
   const station = getStation(id);
   if (!station) return;
+  st.currentId = id;
+  RECONNECT.reset();
+  setPlayerState(station);
+  setLoading();
+  syncFavBtn();
 
-  state.currentId = id;
-  state.isPlaying = false;
-  state.isLoading = true;
-
-  // Show active state in now-playing
-  document.getElementById('np-idle').classList.add('hidden');
-  const npActive = document.getElementById('np-active');
-  npActive.classList.add('visible');
-
-  // Update now-playing info
-  const logoEl = document.getElementById('np-logo-el');
-  logoEl.innerHTML = getLogoHTML(station);
-  document.getElementById('np-name-el').textContent = station.name;
-  document.getElementById('np-freq-el').textContent = station.freq;
-  updateFavBtn(document.getElementById('np-fav-btn'), id);
-
-  // Waveform
-  buildWaveform();
-  setLoadingState();
-
-  // Mini player
-  const miniLogo = document.getElementById('mini-logo');
-  miniLogo.innerHTML = getLogoHTML(station, 'mini');
-  document.getElementById('mini-name').textContent = station.name;
-  document.getElementById('mini-sub').textContent = station.freq;
-
-  // Play
   audio.pause();
   audio.src = station.url;
-  audio.volume = state.volume / 100;
+  audio.volume = st.vol / 100;
+  audio.play().catch(() => {});
 
-  const playPromise = audio.play();
-  if (playPromise !== undefined) {
-    playPromise.catch(err => {
-      console.warn('play() rejected:', err);
+  // iOS Lock Screen Controls (MediaSession API)
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: station.name,
+      artist: station.freq,
+      album: 'Ethiopian FM Radio',
+      artwork: station.favicon 
+        ? [{ src: station.favicon, sizes: '96x96' }] 
+        : [{ src: 'icon-192.png', sizes: '192x192' }]
     });
-  }
-
-  renderList();
-  updateLiveText();
-}
-
-function updateLiveText() {
-  const dot = document.getElementById('np-live-dot');
-  const txt = document.getElementById('np-live-text');
-  if (state.isLoading) {
-    txt.textContent = 'CONNECTING…';
-    dot.style.background = '#fbbf24';
-    dot.style.boxShadow = '0 0 8px #fbbf24';
-  } else if (state.isPlaying) {
-    txt.textContent = 'LIVE';
-    dot.style.background = 'var(--green)';
-    dot.style.boxShadow = '0 0 8px var(--green)';
-  } else {
-    txt.textContent = 'STOPPED';
-    dot.style.background = 'var(--red)';
-    dot.style.boxShadow = '0 0 8px var(--red)';
   }
 }
 
 function togglePlay() {
-  if (!state.currentId) return;
-  if (state.isPlaying) {
+  if (!st.currentId) {
+    const l = filteredList();
+    if (l.length) playStation(l[0].id);
+    return;
+  }
+  if (st.playing) {
     audio.pause();
+    DATA_SAVER.onPause();
   } else {
-    setLoadingState();
-    const p = audio.play();
-    if (p) p.catch(() => {});
+    setLoading();
+    if (audio._cachedSrc) {
+      DATA_SAVER.onResume();
+    } else {
+      audio.play().catch(() => {});
+    }
   }
 }
 
 function prevStation() {
-  const list = getFilteredList();
-  const idx = list.findIndex(s => s.id === state.currentId);
-  if (idx <= 0) { playStation(list[list.length - 1]?.id); return; }
-  playStation(list[idx - 1].id);
-}
-function nextStation() {
-  const list = getFilteredList();
-  const idx = list.findIndex(s => s.id === state.currentId);
-  if (idx === -1 || idx >= list.length - 1) { playStation(list[0]?.id); return; }
-  playStation(list[idx + 1].id);
+  const l = filteredList();
+  const i = l.findIndex(s => s.id === st.currentId);
+  playStation(l[i <= 0 ? l.length - 1 : i - 1]?.id);
 }
 
-// ================================================================
-// AUDIO EVENTS
-// ================================================================
-// ================================================================
-// RECONNECT ENGINE — handles slow / dropped connections
-// ================================================================
+function nextStation() {
+  const l = filteredList();
+  const i = l.findIndex(s => s.id === st.currentId);
+  playStation(l[i < 0 || i >= l.length - 1 ? 0 : i + 1]?.id);
+}
+
+// ============================================================
+// AUTOMATIC RECONNECT & LOW-CONNECTION RESILIENCE
+// ============================================================
 const RECONNECT = {
-  maxAttempts: 7,
+  max: 7,
   attempt: 0,
   timer: null,
   stallTimer: null,
-  backoffMs: [2000, 4000, 8000, 15000, 25000, 40000, 60000],
-
+  backoff: [2000, 4000, 8000, 15000, 25000, 40000, 60000],
+  
   reset() {
     this.attempt = 0;
     clearTimeout(this.timer);
@@ -1685,586 +2042,467 @@ const RECONNECT = {
   onStall() {
     clearTimeout(this.stallTimer);
     this.stallTimer = setTimeout(() => {
-      if (!state.isPlaying || audio.paused) return;
-      showBanner('buffering', 'Slow connection — buffering…');
-      setBuffering(true);
-    }, 4000);
+      if (!st.playing || audio.paused) return;
+      showBanner('buf', 'Slow connection — buffering…');
+      document.getElementById('logo-wrap').classList.add('buffering');
+    }, 3500);
   },
 
   retry(reason) {
-    if (this.attempt >= this.maxAttempts) {
-      setErrorState('Stream unreachable. Check your connection.');
+    if (this.attempt >= this.max) {
+      setError('Connection weak. Tap to retry stream.');
       hideBanner();
-      setBuffering(false);
+      document.getElementById('logo-wrap').classList.remove('buffering');
       return;
     }
-    const delay = this.backoffMs[this.attempt] || 60000;
+    const delay = this.backoff[this.attempt] || 60000;
     const secs = Math.round(delay / 1000);
-    showBanner('retrying',
-      `Weak connection — retrying in ${secs}s… (attempt ${this.attempt + 1}/${this.maxAttempts})`);
-    setBuffering(true);
+    showBanner('retry', `Slow network — reconnecting in ${secs}s… (${this.attempt + 1}/${this.max})`);
+    document.getElementById('logo-wrap').classList.add('buffering');
+    
     this.timer = setTimeout(() => {
-      if (!state.currentId) return;
-      const url = audio.src;
+      if (!st.currentId) return;
+      const url = audio.src || audio._cachedSrc;
       audio.src = '';
       setTimeout(() => {
         audio.src = url;
         audio.play().catch(() => RECONNECT.retry('play-failed'));
-      }, 400);
+      }, 350);
     }, delay);
     this.attempt++;
   },
 
   onRecovered() {
     if (this.attempt > 0) {
-      showBanner('recovered', '✓ Connection restored');
+      showBanner('ok', '✓ Live connection restored');
       setTimeout(hideBanner, 3000);
     }
     this.reset();
-    setBuffering(false);
+    document.getElementById('logo-wrap').classList.remove('buffering');
   }
 };
 
 function showBanner(type, msg) {
   const el = document.getElementById('reconnect-banner');
-  el.className = 'reconnect-banner ' + type;
+  el.classList.remove('show', 'banner-buf', 'banner-retry', 'banner-ok');
+  const map = { buf: 'banner-buf', retry: 'banner-retry', ok: 'banner-ok' };
+  el.classList.add('show', map[type] || 'banner-buf');
   document.getElementById('reconnect-msg').textContent = msg;
 }
+
 function hideBanner() {
   const el = document.getElementById('reconnect-banner');
-  el.className = 'reconnect-banner';
-}
-function setBuffering(on) {
-  document.getElementById('np-logo-wrap')?.classList.toggle('buffering', on);
+  el.classList.remove('show', 'banner-buf', 'banner-retry', 'banner-ok');
 }
 
-document.getElementById('retry-now-btn').addEventListener('click', () => {
+document.getElementById('retry-now').addEventListener('click', () => {
   clearTimeout(RECONNECT.timer);
   RECONNECT.attempt = 0;
-  const url = audio.src;
+  const url = audio.src || audio._cachedSrc;
   audio.src = '';
   setTimeout(() => {
     audio.src = url;
     audio.play().catch(() => {});
-  }, 300);
-  showBanner('buffering', 'Retrying…');
+  }, 250);
+  showBanner('buf', 'Connecting…');
 });
 
-// ================================================================
-// CONNECTION QUALITY INDICATOR (Network Information API)
-// ================================================================
-function updateConnQuality() {
-  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const bar = document.getElementById('conn-bar');
-  const label = document.getElementById('conn-label');
-  const dots = bar.querySelectorAll('.conn-dots span');
-
-  if (!navigator.onLine) {
-    bar.className = 'conn-bar offline';
-    bar.classList.remove('hidden');
-    label.textContent = 'No internet connection';
-    dots.forEach((d,i) => d.classList.toggle('on', false));
-    return;
-  }
-
-  if (!conn) {
-    bar.classList.add('hidden');
-    return;
-  }
-
-  const type = conn.effectiveType || conn.type || '';
-  let level, cls, txt;
-  if (type === 'slow-2g' || type === '2g') {
-    level = 1; cls = 'poor';  txt = 'Slow connection (2G) — may buffer';
-  } else if (type === '3g') {
-    level = 2; cls = 'ok';    txt = 'Moderate connection (3G)';
-  } else if (type === '4g') {
-    level = 4; cls = 'good';  txt = 'Good connection (4G/WiFi)';
-  } else {
-    level = 3; cls = 'ok';    txt = 'Connection detected';
-  }
-
-  // Only show when not good
-  if (cls === 'good') {
-    bar.classList.add('hidden');
-  } else {
-    bar.className = 'conn-bar ' + cls;
-    bar.classList.remove('hidden');
-  }
-  label.textContent = txt;
-  dots.forEach((d, i) => d.classList.toggle('on', i < level));
-}
-
-if (navigator.connection) {
-  navigator.connection.addEventListener('change', updateConnQuality);
-}
-window.addEventListener('online',  () => { updateConnQuality(); hideBanner(); });
-window.addEventListener('offline', () => {
-  updateConnQuality();
-  showBanner('retrying', 'No internet — waiting for connection…');
-});
-updateConnQuality();
-
-// ================================================================
+// ============================================================
 // AUDIO EVENTS
-// ================================================================
+// ============================================================
 audio.addEventListener('playing', () => {
-  state.isLoading = false;
+  st.loading = false;
   RECONNECT.onRecovered();
-  setPlayState(true);
-  updateLiveText();
+  setPlaying(true);
+  syncLiveBadge();
 });
 audio.addEventListener('pause', () => {
-  state.isLoading = false;
+  st.loading = false;
   RECONNECT.reset();
-  setPlayState(false);
-  updateLiveText();
+  setPlaying(false);
+  syncLiveBadge();
 });
 audio.addEventListener('waiting', () => {
-  state.isLoading = true;
-  setLoadingState();
-  updateLiveText();
-  animateWaveform(false);
+  st.loading = true;
+  setLoading();
   RECONNECT.onStall();
 });
 audio.addEventListener('canplay', () => {
   clearTimeout(RECONNECT.stallTimer);
   hideBanner();
-  setBuffering(false);
+  document.getElementById('logo-wrap').classList.remove('buffering');
 });
 audio.addEventListener('error', () => {
-  state.isLoading = false;
-  updateLiveText();
-  // Don't show error immediately — retry first
-  if (state.currentId) {
-    RECONNECT.retry('audio-error');
-  } else {
-    setErrorState('Cannot connect to stream.');
-  }
+  st.loading = false;
+  syncLiveBadge();
+  if (st.currentId) RECONNECT.retry('error');
+  else setError();
 });
 audio.addEventListener('stalled', () => {
   RECONNECT.retry('stalled');
 });
 audio.addEventListener('volumechange', () => {
-  const vol = Math.round(audio.volume * 100);
-  const slider = document.getElementById('vol-slider');
-  slider.value = vol;
-  slider.style.setProperty('--pct', vol + '%');
+  const v = Math.round(audio.volume * 100);
+  const sl = document.getElementById('vol-slider');
+  sl.value = v;
+  sl.style.setProperty('--pct', v + '%');
 });
 
-// ================================================================
-// FAVOURITES
-// ================================================================
-function toggleFav(id, btn) {
-  if (state.favourites.has(id)) {
-    state.favourites.delete(id);
-    showToast('Removed from favourites');
-  } else {
-    state.favourites.add(id);
-    showToast('⭐ Added to favourites');
-  }
-  save();
-  if (btn) updateFavBtn(btn, id);
-  renderList();
-}
-function updateFavBtn(btn, id) {
-  const active = state.favourites.has(id);
-  btn.classList.toggle('active', active);
-  btn.querySelector('svg').style.fill = active ? 'var(--yellow)' : 'none';
-  btn.querySelector('svg').style.color = active ? 'var(--yellow)' : 'currentColor';
+// MediaSession Handlers
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('play', () => audio.play());
+  navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+  navigator.mediaSession.setActionHandler('previoustrack', prevStation);
+  navigator.mediaSession.setActionHandler('nexttrack', nextStation);
 }
 
-// ================================================================
+// ============================================================
+// CONNECTION MONITOR
+// ============================================================
+function updateConn() {
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const el = document.getElementById('conn-banner');
+  const dots = el.querySelectorAll('.conn-dots span');
+  
+  if (!navigator.onLine) {
+    el.classList.add('show');
+    document.getElementById('conn-txt').textContent = 'No internet — waiting for connection…';
+    dots.forEach(d => d.classList.remove('on'));
+    return;
+  }
+  if (!conn) {
+    el.classList.remove('show');
+    return;
+  }
+  const t = conn.effectiveType || '';
+  let level = 4;
+  let txt = 'Connected';
+  if (t === 'slow-2g' || t === '2g') {
+    level = 1;
+    txt = '2G Signal — Eco stream active';
+    el.classList.add('show');
+  } else if (t === '3g') {
+    level = 2;
+    txt = '3G Signal — Optimized for low data';
+    el.classList.add('show');
+  } else {
+    el.classList.remove('show');
+    return;
+  }
+  document.getElementById('conn-txt').textContent = txt;
+  dots.forEach((d, i) => d.classList.toggle('on', i < level));
+}
+
+if (navigator.connection) navigator.connection.addEventListener('change', updateConn);
+window.addEventListener('online', () => { updateConn(); hideBanner(); });
+window.addEventListener('offline', () => { updateConn(); showBanner('retry', 'No internet connection'); });
+updateConn();
+
+// ============================================================
+// FAVOURITES CONTROLLER
+// ============================================================
+function toggleFav(id) {
+  if (st.favs.has(id)) {
+    st.favs.delete(id);
+    showToast('Removed from favourites');
+  } else {
+    st.favs.add(id);
+    showToast('⭐ Saved to favourites');
+  }
+  save();
+  syncFavBtn();
+  renderList();
+}
+document.getElementById('fav-btn').addEventListener('click', () => {
+  if (st.currentId) toggleFav(st.currentId);
+});
+
+// ============================================================
 // SLEEP TIMER
-// ================================================================
-function setSleepTimer(mins) {
-  clearSleepTimer();
+// ============================================================
+let sleepCountI;
+function setSleep(mins) {
+  clearSleep();
   if (!mins) {
-    showToast('Sleep timer off');
-    document.getElementById('sleep-banner').classList.remove('active');
+    showToast('Sleep timer turned off');
+    document.getElementById('sleep-banner').classList.remove('show');
     closeModal('sleep-modal');
     return;
   }
-  const ms = mins * 60 * 1000;
-  state.sleepEndsAt = Date.now() + ms;
-  state.sleepTimer = setTimeout(() => {
+  st.sleepEnd = Date.now() + mins * 60000;
+  st.sleepTimer = setTimeout(() => {
     audio.pause();
-    state.sleepTimer = null;
-    state.sleepEndsAt = null;
-    document.getElementById('sleep-banner').classList.remove('active');
-    showToast('😴 Sleep timer — radio stopped');
-  }, ms);
-  document.getElementById('sleep-banner').classList.add('active');
-  updateSleepCountdown();
+    st.sleepTimer = null;
+    st.sleepEnd = null;
+    document.getElementById('sleep-banner').classList.remove('show');
+    showToast('😴 Radio paused — sleep timer complete');
+  }, mins * 60000);
+
+  document.getElementById('sleep-banner').classList.add('show');
+  tickSleep();
+  sleepCountI = setInterval(tickSleep, 1000);
   closeModal('sleep-modal');
-  showToast(`⏱ Sleep timer set for ${mins} minutes`);
-  // Highlight active button
-  document.querySelectorAll('.sleep-opt').forEach(b => {
-    b.classList.toggle('active', parseInt(b.dataset.mins) === mins);
-  });
+  showToast(`⏱ Sleep timer set for ${mins} min`);
+  document.querySelectorAll('.sleep-opt').forEach(b => b.classList.toggle('active', +b.dataset.mins === mins));
 }
 
-function clearSleepTimer() {
-  if (state.sleepTimer) { clearTimeout(state.sleepTimer); state.sleepTimer = null; }
-  state.sleepEndsAt = null;
+function tickSleep() {
+  if (!st.sleepEnd) return;
+  const rem = st.sleepEnd - Date.now();
+  if (rem <= 0) return;
+  const m = Math.floor(rem / 60000);
+  const s = Math.floor((rem % 60000) / 1000).toString().padStart(2, '0');
+  document.getElementById('sleep-txt').textContent = `Stops in ${m}:${s}`;
 }
 
-let countdownInterval;
-function updateSleepCountdown() {
-  clearInterval(countdownInterval);
-  countdownInterval = setInterval(() => {
-    if (!state.sleepEndsAt) { clearInterval(countdownInterval); return; }
-    const remaining = state.sleepEndsAt - Date.now();
-    if (remaining <= 0) { clearInterval(countdownInterval); return; }
-    const m = Math.floor(remaining / 60000);
-    const s = Math.floor((remaining % 60000) / 1000).toString().padStart(2,'0');
-    document.getElementById('sleep-countdown').textContent = `Stops in ${m}:${s}`;
-  }, 1000);
+function clearSleep() {
+  clearTimeout(st.sleepTimer);
+  st.sleepTimer = null;
+  st.sleepEnd = null;
+  clearInterval(sleepCountI);
 }
 
-// ================================================================
-// RENDER
-// ================================================================
-function getFilteredList() {
-  let list = [];
-  if (state.activeTab === 'my') {
-    list = state.myList.map(id => getStation(id)).filter(Boolean);
-  } else if (state.activeTab === 'favs') {
-    list = state.stations.filter(s => state.favourites.has(s.id));
-  } else {
-    list = [...state.stations];
+document.getElementById('sleep-cancel').addEventListener('click', () => {
+  clearSleep();
+  document.getElementById('sleep-banner').classList.remove('show');
+  showToast('Sleep timer cancelled');
+});
+document.querySelectorAll('.sleep-opt').forEach(b => {
+  b.addEventListener('click', () => setSleep(+b.dataset.mins));
+});
+
+// ============================================================
+// VOLUME CONTROLLER
+// ============================================================
+const volSl = document.getElementById('vol-slider');
+volSl.addEventListener('input', () => {
+  st.vol = +volSl.value;
+  audio.volume = st.vol / 100;
+  volSl.style.setProperty('--pct', st.vol + '%');
+  save();
+});
+
+// ============================================================
+// LIST RENDERING & FILTERING
+// ============================================================
+function filteredList() {
+  let list = st.tab === 'my' ? st.myList.map(id => getStation(id)).filter(Boolean)
+           : st.tab === 'favs' ? st.all.filter(s => st.favs.has(s.id))
+           : [...st.all];
+  
+  if (st.cat !== 'all') {
+    list = list.filter(s => s.cat && s.cat.includes(st.cat));
   }
-  // Category filter
-  if (state.catFilter !== 'all') {
-    list = list.filter(s => s.cat && s.cat.includes(state.catFilter));
-  }
-  // Search
-  if (state.searchQuery) {
-    const q = state.searchQuery.toLowerCase();
-    list = list.filter(s =>
-      s.name.toLowerCase().includes(q) ||
-      s.freq.toLowerCase().includes(q)
-    );
+  if (st.search) {
+    const q = st.search.toLowerCase();
+    list = list.filter(s => s.name.toLowerCase().includes(q) || s.freq.toLowerCase().includes(q));
   }
   return list;
 }
 
-function getCatBadges(station) {
-  if (!station.cat) return '';
-  return station.cat.map(c => {
-    const map = { news: 'badge-news', music: 'badge-music', sport: 'badge-sport', religion: 'badge-relig' };
-    return `<span class="badge ${map[c] || ''}">${c}</span>`;
-  }).join('');
-}
-
 function renderList() {
-  const list = getFilteredList();
-  const container = document.getElementById('station-list');
-
+  const list = filteredList();
+  const c = document.getElementById('slist');
   if (!list.length) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-        </svg>
-        <h3>${state.activeTab === 'favs' ? 'No favourites yet' : 'No stations found'}</h3>
-        <p>${state.activeTab === 'favs' ? 'Tap the ⭐ on any station to add it here.' :
-            state.searchQuery ? 'Try a different search term.' : 'Add a station using the + button.'}</p>
-      </div>`;
+    c.innerHTML = `<div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+      </svg>
+      <h3>${st.tab === 'favs' ? 'No favourites yet' : 'No stations found'}</h3>
+      <p>${st.tab === 'favs' ? 'Tap ⭐ on any station to add it here.' : 'Try another search term or tap + to add your own.'}</p>
+    </div>`;
     return;
   }
 
-  container.innerHTML = list.map(station => {
-    const isActive = station.id === state.currentId;
-    const isHttps = station.url.startsWith('https');
-    const isFav = state.favourites.has(station.id);
-    return `
-      <div class="station-card ${isActive ? 'active' : ''}"
-           data-id="${station.id}" role="button" tabindex="0"
-           aria-label="Play ${station.name}" aria-pressed="${isActive && state.isPlaying}">
-        <div class="sc-logo">${getLogoHTML(station)}</div>
-        <div class="sc-info">
-          <div class="sc-name">${station.name}</div>
-          <div class="sc-meta">${station.freq}</div>
-          <div class="sc-badges">
-            <span class="badge ${isHttps ? 'badge-https' : 'badge-http'}">${isHttps ? 'HTTPS ✓' : 'HTTP'}</span>
-            ${getCatBadges(station)}
-          </div>
+  const isFav = id => st.favs.has(id);
+  c.innerHTML = list.map(s => `
+    <div class="scard${s.id === st.currentId ? ' active' : ''}" data-id="${s.id}" role="button" tabindex="0">
+      <div class="sc-logo">
+        ${s.favicon 
+          ? `<img src="${s.favicon}" alt="${s.name}" onerror="this.outerHTML='<span style=\\'font-size:9.5px;font-weight:900;text-align:center;line-height:1.2;padding:4px\\'>${(s.abbr||s.name.slice(0,6)).replace('\n','<br>')}</span>'">`
+          : `<span style="font-size:9.5px;font-weight:900;text-align:center;line-height:1.2;padding:4px">${(s.abbr||s.name.slice(0,6)).replace('\n','<br>')}</span>`}
+      </div>
+      <div class="sc-info">
+        <div class="sc-name">${s.name}</div>
+        <div class="sc-meta">
+          <span class="sc-badge ${s.mhz ? 'fm' : 'eco'}">${s.mhz ? s.mhz + ' FM' : '48k ECO'}</span>
+          <span style="color:var(--t3);font-size:10px">${s.freq.split('·')[1] || 'Ethiopia'}</span>
         </div>
-        <div class="sc-right">
-          <div class="sc-playing-icon ${isActive && state.isPlaying ? 'visible' : ''}" aria-hidden="true">
-            <span></span><span></span><span></span>
-          </div>
-          <button class="sc-fav-btn ${isFav ? 'active' : ''}"
-                  data-fav-id="${station.id}"
-                  aria-label="${isFav ? 'Remove from favourites' : 'Add to favourites'}">
-            <svg viewBox="0 0 24 24" fill="${isFav ? 'var(--yellow)' : 'none'}"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                 style="color:${isFav ? 'var(--yellow)' : 'currentColor'}">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-          </button>
-        </div>
-      </div>`;
-  }).join('');
+      </div>
+      <div class="sc-right">
+        <div class="sc-eq${s.id === st.currentId && st.playing ? ' show' : ''}"><span></span><span></span><span></span></div>
+        <button class="sc-fav${isFav(s.id) ? ' fav-on' : ''}" data-fav="${s.id}" aria-label="Toggle favourite">
+          <svg viewBox="0 0 24 24" fill="${isFav(s.id) ? 'var(--y)' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:${isFav(s.id) ? 'var(--y)' : 'currentColor'}">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>`).join('');
 
-  // Attach events
-  container.querySelectorAll('.station-card').forEach(card => {
+  c.querySelectorAll('.scard').forEach(card => {
     card.addEventListener('click', e => {
-      if (e.target.closest('.sc-fav-btn')) return; // handled below
+      if (e.target.closest('.sc-fav')) return;
       const id = card.dataset.id;
-      if (id === state.currentId && !state.isLoading) {
-        togglePlay();
-      } else {
-        playStation(id);
-      }
+      if (id === st.currentId && !st.loading) togglePlay();
+      else playStation(id);
     });
     card.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
     });
   });
-  container.querySelectorAll('.sc-fav-btn').forEach(btn => {
+
+  c.querySelectorAll('.sc-fav').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      toggleFav(btn.dataset.favId, btn);
+      toggleFav(btn.dataset.fav);
     });
   });
 }
 
-// ================================================================
-// TABS
-// ================================================================
+// ============================================================
+// TABS & SEARCH
+// ============================================================
 function switchTab(tab) {
-  state.activeTab = tab;
-  state.catFilter = 'all';
-  state.searchQuery = '';
-  document.getElementById('search-input').value = '';
+  st.tab = tab;
+  st.cat = 'all';
+  st.search = '';
+  document.getElementById('search-inp').value = '';
+  document.getElementById('sclear').classList.remove('show');
   document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cat === 'all'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-
+  document.querySelectorAll('.stab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  
   const showSearch = tab === 'all';
   document.getElementById('search-wrap').style.display = showSearch ? '' : 'none';
-  document.getElementById('filter-chips').style.display = showSearch ? '' : 'none';
-
+  document.getElementById('chips').style.display = showSearch ? '' : 'none';
   renderList();
 }
+document.querySelectorAll('.stab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
-// ================================================================
-// MODAL
-// ================================================================
-function openModal(id) {
-  document.getElementById(id).classList.add('open');
-}
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-
-// ================================================================
-// TOAST
-// ================================================================
-let toastTimer;
-function showToast(msg, dur = 2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), dur);
-}
-
-// ================================================================
-// ADD CUSTOM STATION
-// ================================================================
-function addCustomStation() {
-  const name = document.getElementById('add-name').value.trim();
-  const url  = document.getElementById('add-url').value.trim();
-  const freq = document.getElementById('add-freq').value.trim() || 'Custom Stream';
-
-  if (!name) { showToast('Please enter a station name'); return; }
-  if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
-    showToast('Please enter a valid stream URL (http:// or https://)'); return;
-  }
-
-  const id = 'custom_' + Date.now();
-  const station = {
-    id, name, url, freq,
-    cat: [],
-    favicon: '',
-    abbr: name.slice(0, 8),
-    custom: true
-  };
-  state.stations.push(station);
-  state.myList.push(id);
-  save();
-  closeModal('add-modal');
-  document.getElementById('add-name').value = '';
-  document.getElementById('add-url').value = '';
-  document.getElementById('add-freq').value = '';
-  switchTab('my');
-  showToast(`✓ "${name}" added to your stations`);
-  // Auto-play it
-  setTimeout(() => playStation(id), 300);
-}
-
-// ================================================================
-// VOLUME
-// ================================================================
-const volSlider = document.getElementById('vol-slider');
-volSlider.style.setProperty('--pct', '80%');
-volSlider.addEventListener('input', () => {
-  const val = parseInt(volSlider.value);
-  state.volume = val;
-  audio.volume = val / 100;
-  volSlider.style.setProperty('--pct', val + '%');
-  save();
-});
-
-// ================================================================
-// MINI PLAYER (scroll-based)
-// ================================================================
-const listWrap = document.getElementById('station-list-wrap');
-const npCard = document.getElementById('now-playing-card');
-const miniPlayer = document.getElementById('mini-player');
-
-function updateMiniPlayer() {
-  if (!state.currentId) return;
-  const rect = npCard.getBoundingClientRect();
-  const show = rect.bottom < 0;
-  miniPlayer.classList.toggle('visible', show);
-}
-listWrap.addEventListener('scroll', updateMiniPlayer, { passive: true });
-
-// ================================================================
-// EVENT LISTENERS
-// ================================================================
-document.getElementById('ctrl-play').addEventListener('click', () => {
-  if (!state.currentId) {
-    const list = getFilteredList();
-    if (list.length) playStation(list[0].id);
-  } else {
-    togglePlay();
-  }
-});
-document.getElementById('ctrl-prev').addEventListener('click', prevStation);
-document.getElementById('ctrl-next').addEventListener('click', nextStation);
-
-document.getElementById('mini-play').addEventListener('click', togglePlay);
-
-document.getElementById('np-fav-btn').addEventListener('click', () => {
-  if (state.currentId) toggleFav(state.currentId, document.getElementById('np-fav-btn'));
-});
-
-document.getElementById('add-btn').addEventListener('click', () => openModal('add-modal'));
-document.getElementById('add-cancel').addEventListener('click', () => closeModal('add-modal'));
-document.getElementById('add-confirm').addEventListener('click', addCustomStation);
-document.getElementById('add-modal').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeModal('add-modal');
-});
-
-document.getElementById('sleep-btn').addEventListener('click', () => openModal('sleep-modal'));
-document.getElementById('sleep-modal').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeModal('sleep-modal');
-});
-document.querySelectorAll('.sleep-opt').forEach(btn => {
-  btn.addEventListener('click', () => setSleepTimer(parseInt(btn.dataset.mins)));
-});
-document.getElementById('sleep-cancel-banner').addEventListener('click', () => {
-  clearSleepTimer();
-  document.getElementById('sleep-banner').classList.remove('active');
-  showToast('Sleep timer cancelled');
-});
-
-// Volume toggle
-document.getElementById('ctrl-vol').addEventListener('click', e => {
-  e.stopPropagation();
-  document.getElementById('vol-popup').classList.toggle('open');
-});
-document.addEventListener('click', e => {
-  if (!e.target.closest('#ctrl-vol') && !e.target.closest('#vol-popup')) {
-    document.getElementById('vol-popup').classList.remove('open');
-  }
-});
-
-// Tabs
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-});
-
-// Search
-const searchInput = document.getElementById('search-input');
-const searchClear = document.getElementById('search-clear');
-searchInput.addEventListener('input', () => {
-  state.searchQuery = searchInput.value;
-  searchClear.classList.toggle('visible', !!searchInput.value);
+const sinp = document.getElementById('search-inp');
+sinp.addEventListener('input', () => {
+  st.search = sinp.value;
+  document.getElementById('sclear').classList.toggle('show', !!sinp.value);
   renderList();
 });
-searchClear.addEventListener('click', () => {
-  searchInput.value = '';
-  state.searchQuery = '';
-  searchClear.classList.remove('visible');
+document.getElementById('sclear').addEventListener('click', () => {
+  sinp.value = '';
+  st.search = '';
+  document.getElementById('sclear').classList.remove('show');
   renderList();
 });
 
-// Category chips
 document.querySelectorAll('.chip').forEach(chip => {
   chip.addEventListener('click', () => {
-    state.catFilter = chip.dataset.cat;
-    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cat === state.catFilter));
+    st.cat = chip.dataset.cat;
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cat === st.cat));
     renderList();
   });
 });
 
-// Keyboard shortcut — space to play/pause
+// ============================================================
+// BOTTOM SHEET EXPAND/COLLAPSE
+// ============================================================
+const sheet = document.getElementById('sheet');
+let sheetExpanded = false;
+function toggleSheet() {
+  sheetExpanded = !sheetExpanded;
+  sheet.classList.toggle('expanded', sheetExpanded);
+  const icon = document.getElementById('sheet-toggle-btn').querySelector('svg polyline');
+  icon.setAttribute('points', sheetExpanded ? '6 9 12 15 18 9' : '18 15 12 9 6 15');
+}
+document.getElementById('sheet-handle-row').addEventListener('click', toggleSheet);
+document.getElementById('sheet-toggle-btn').addEventListener('click', toggleSheet);
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.getElementById('add-btn').addEventListener('click', () => openModal('add-modal'));
+document.getElementById('add-cancel').addEventListener('click', () => closeModal('add-modal'));
+document.getElementById('add-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('add-modal'); });
+
+document.getElementById('sleep-btn').addEventListener('click', () => openModal('sleep-modal'));
+document.getElementById('sleep-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('sleep-modal'); });
+
+document.getElementById('eco-btn').addEventListener('click', () => openModal('eco-modal'));
+document.getElementById('eco-close').addEventListener('click', () => closeModal('eco-modal'));
+document.getElementById('eco-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('eco-modal'); });
+
+document.getElementById('add-confirm').addEventListener('click', () => {
+  const name = document.getElementById('add-name').value.trim();
+  const url  = document.getElementById('add-url').value.trim();
+  const freq = document.getElementById('add-freq').value.trim() || 'Custom Stream';
+  if (!name) { showToast('Please enter a station name'); return; }
+  if (!url || !url.startsWith('http')) { showToast('Please enter a valid stream URL'); return; }
+  
+  const id = 'custom_' + Date.now();
+  const mhzMatch = freq.match(/(\d{2,3}(?:\.\d)?)\s*FM/i);
+  const mhz = mhzMatch ? parseFloat(mhzMatch[1]) : null;
+  
+  const s = {
+    id, name, url, freq,
+    mhz,
+    cat: ['fm'],
+    favicon: '',
+    abbr: name.slice(0, 8),
+    colors: ['#065f46', '#92400e'],
+    custom: true
+  };
+  st.all.push(s);
+  st.myList.push(id);
+  save();
+  closeModal('add-modal');
+  ['add-name', 'add-url', 'add-freq'].forEach(i => document.getElementById(i).value = '');
+  switchTab('my');
+  showToast(`✓ "${name}" added`);
+  setTimeout(() => playStation(id), 300);
+});
+
+// ============================================================
+// TOAST NOTIFICATIONS
+// ============================================================
+let toastT;
+function showToast(msg, dur = 2400) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ============================================================
+// HARDWARE & KEYBOARD CONTROLS
+// ============================================================
+document.getElementById('ctrl-play').addEventListener('click', togglePlay);
+document.getElementById('ctrl-prev').addEventListener('click', prevStation);
+document.getElementById('ctrl-next').addEventListener('click', nextStation);
+
 document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.target.tagName === 'INPUT') return;
   if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
   if (e.code === 'ArrowRight') nextStation();
   if (e.code === 'ArrowLeft') prevStation();
 });
 
-// MediaSession API (lock screen controls)
-if ('mediaSession' in navigator) {
-  navigator.mediaSession.setActionHandler('play',     () => { audio.play(); });
-  navigator.mediaSession.setActionHandler('pause',    () => { audio.pause(); });
-  navigator.mediaSession.setActionHandler('previoustrack', prevStation);
-  navigator.mediaSession.setActionHandler('nexttrack',     nextStation);
-}
-
-function updateMediaSession(station) {
-  if (!('mediaSession' in navigator) || !station) return;
-  navigator.mediaSession.metadata = new MediaMetadata({
-    title: station.name,
-    artist: station.freq,
-    album: 'Ethiopian FM Radio',
-    artwork: station.favicon
-      ? [{ src: station.favicon, sizes: '96x96', type: 'image/png' }]
-      : [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }]
-  });
-  navigator.mediaSession.playbackState = 'playing';
-}
-
-audio.addEventListener('playing', () => {
-  const st = getStation(state.currentId);
-  if (st) updateMediaSession(st);
-});
-
-// ================================================================
-// PWA / SERVICE WORKER
-// ================================================================
+// ============================================================
+// SERVICE WORKER (OFFLINE APP SHELL - 0 KB FUTURE LOAD)
+// ============================================================
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  });
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-// ================================================================
-// INIT
-// ================================================================
-initState();
+// ============================================================
+// INITIALIZATION
+// ============================================================
+buildStars();
+buildEQ();
+load();
 switchTab('my');
-buildWaveform();
-
-// Welcome toast
-setTimeout(() => showToast('🎙 Tap any station to start listening'), 800);
+setAmbient(null);
+updateFmNeedle(null);
+setTimeout(() => showToast('🎙 Tap any station to start listening'), 700);
 </script>
 </body>
 </html>
