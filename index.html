@@ -16,6 +16,101 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet" />
   <style>
     /* ============================================================
+       CONNECTION QUALITY INDICATOR
+    ============================================================ */
+    .conn-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      transition: all 0.4s;
+    }
+    .conn-bar.hidden { display: none; }
+    .conn-dots { display: flex; gap: 3px; align-items: flex-end; }
+    .conn-dots span {
+      width: 4px;
+      border-radius: 2px;
+      background: currentColor;
+      opacity: 0.25;
+      transition: all 0.3s;
+    }
+    .conn-dots span.on { opacity: 1; }
+    .conn-dots span:nth-child(1) { height: 6px; }
+    .conn-dots span:nth-child(2) { height: 10px; }
+    .conn-dots span:nth-child(3) { height: 14px; }
+    .conn-dots span:nth-child(4) { height: 18px; }
+    .conn-bar.good   { color: var(--green); }
+    .conn-bar.ok     { color: var(--yellow); }
+    .conn-bar.poor   { color: var(--red); }
+    .conn-bar.offline { color: var(--red); }
+
+    /* ============================================================
+       RECONNECT BANNER
+    ============================================================ */
+    .reconnect-banner {
+      margin: 0 20px 4px;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      animation: banner-pulse 2s ease-in-out infinite;
+    }
+    .reconnect-banner.buffering {
+      display: flex;
+      background: rgba(251,191,36,0.10);
+      border: 1px solid rgba(251,191,36,0.3);
+      color: var(--yellow);
+    }
+    .reconnect-banner.retrying {
+      display: flex;
+      background: rgba(248,113,113,0.10);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: var(--red);
+    }
+    .reconnect-banner.recovered {
+      display: flex;
+      background: rgba(74,222,128,0.10);
+      border: 1px solid rgba(74,222,128,0.3);
+      color: var(--green);
+      animation: none;
+    }
+    @keyframes banner-pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.65; }
+    }
+    .reconnect-banner svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .reconnect-banner span { flex: 1; }
+    .reconnect-banner .retry-now {
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+    .reconnect-banner .retry-now:hover { opacity: 1; }
+
+    /* Buffer ring on logo */
+    .np-logo-wrap { position: relative; }
+    .buffer-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      border-top-color: var(--yellow);
+      border-right-color: var(--yellow);
+      display: none;
+      animation: spin-ring 1s linear infinite;
+    }
+    .np-logo-wrap.buffering .buffer-ring { display: block; }
+    @keyframes spin-ring {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    /* ============================================================
        DESIGN TOKENS
     ============================================================ */
     :root {
@@ -961,7 +1056,10 @@
         <span id="np-live-text">LIVE</span>
       </div>
       <div class="np-station-row">
-        <div class="np-logo" id="np-logo-el">ET</div>
+        <div class="np-logo-wrap" id="np-logo-wrap">
+          <div class="np-logo" id="np-logo-el">ET</div>
+          <div class="buffer-ring"></div>
+        </div>
         <div class="np-info">
           <div class="np-name" id="np-name-el">Station Name</div>
           <div class="np-freq" id="np-freq-el">Frequency · Genre</div>
@@ -1010,6 +1108,24 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Connection quality bar -->
+  <div class="conn-bar hidden" id="conn-bar">
+    <div class="conn-dots">
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <span id="conn-label">Checking connection…</span>
+  </div>
+
+  <!-- Reconnect banner -->
+  <div class="reconnect-banner" id="reconnect-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <path d="M23 4v6h-6"/>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+    </svg>
+    <span id="reconnect-msg">Buffering…</span>
+    <button class="retry-now" id="retry-now-btn">Retry now</button>
   </div>
 
   <!-- Sleep countdown banner -->
@@ -1549,13 +1665,158 @@ function nextStation() {
 // ================================================================
 // AUDIO EVENTS
 // ================================================================
+// ================================================================
+// RECONNECT ENGINE — handles slow / dropped connections
+// ================================================================
+const RECONNECT = {
+  maxAttempts: 7,
+  attempt: 0,
+  timer: null,
+  stallTimer: null,
+  backoffMs: [2000, 4000, 8000, 15000, 25000, 40000, 60000],
+
+  reset() {
+    this.attempt = 0;
+    clearTimeout(this.timer);
+    clearTimeout(this.stallTimer);
+    hideBanner();
+  },
+
+  onStall() {
+    clearTimeout(this.stallTimer);
+    this.stallTimer = setTimeout(() => {
+      if (!state.isPlaying || audio.paused) return;
+      showBanner('buffering', 'Slow connection — buffering…');
+      setBuffering(true);
+    }, 4000);
+  },
+
+  retry(reason) {
+    if (this.attempt >= this.maxAttempts) {
+      setErrorState('Stream unreachable. Check your connection.');
+      hideBanner();
+      setBuffering(false);
+      return;
+    }
+    const delay = this.backoffMs[this.attempt] || 60000;
+    const secs = Math.round(delay / 1000);
+    showBanner('retrying',
+      `Weak connection — retrying in ${secs}s… (attempt ${this.attempt + 1}/${this.maxAttempts})`);
+    setBuffering(true);
+    this.timer = setTimeout(() => {
+      if (!state.currentId) return;
+      const url = audio.src;
+      audio.src = '';
+      setTimeout(() => {
+        audio.src = url;
+        audio.play().catch(() => RECONNECT.retry('play-failed'));
+      }, 400);
+    }, delay);
+    this.attempt++;
+  },
+
+  onRecovered() {
+    if (this.attempt > 0) {
+      showBanner('recovered', '✓ Connection restored');
+      setTimeout(hideBanner, 3000);
+    }
+    this.reset();
+    setBuffering(false);
+  }
+};
+
+function showBanner(type, msg) {
+  const el = document.getElementById('reconnect-banner');
+  el.className = 'reconnect-banner ' + type;
+  document.getElementById('reconnect-msg').textContent = msg;
+}
+function hideBanner() {
+  const el = document.getElementById('reconnect-banner');
+  el.className = 'reconnect-banner';
+}
+function setBuffering(on) {
+  document.getElementById('np-logo-wrap')?.classList.toggle('buffering', on);
+}
+
+document.getElementById('retry-now-btn').addEventListener('click', () => {
+  clearTimeout(RECONNECT.timer);
+  RECONNECT.attempt = 0;
+  const url = audio.src;
+  audio.src = '';
+  setTimeout(() => {
+    audio.src = url;
+    audio.play().catch(() => {});
+  }, 300);
+  showBanner('buffering', 'Retrying…');
+});
+
+// ================================================================
+// CONNECTION QUALITY INDICATOR (Network Information API)
+// ================================================================
+function updateConnQuality() {
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const bar = document.getElementById('conn-bar');
+  const label = document.getElementById('conn-label');
+  const dots = bar.querySelectorAll('.conn-dots span');
+
+  if (!navigator.onLine) {
+    bar.className = 'conn-bar offline';
+    bar.classList.remove('hidden');
+    label.textContent = 'No internet connection';
+    dots.forEach((d,i) => d.classList.toggle('on', false));
+    return;
+  }
+
+  if (!conn) {
+    bar.classList.add('hidden');
+    return;
+  }
+
+  const type = conn.effectiveType || conn.type || '';
+  let level, cls, txt;
+  if (type === 'slow-2g' || type === '2g') {
+    level = 1; cls = 'poor';  txt = 'Slow connection (2G) — may buffer';
+  } else if (type === '3g') {
+    level = 2; cls = 'ok';    txt = 'Moderate connection (3G)';
+  } else if (type === '4g') {
+    level = 4; cls = 'good';  txt = 'Good connection (4G/WiFi)';
+  } else {
+    level = 3; cls = 'ok';    txt = 'Connection detected';
+  }
+
+  // Only show when not good
+  if (cls === 'good') {
+    bar.classList.add('hidden');
+  } else {
+    bar.className = 'conn-bar ' + cls;
+    bar.classList.remove('hidden');
+  }
+  label.textContent = txt;
+  dots.forEach((d, i) => d.classList.toggle('on', i < level));
+}
+
+if (navigator.connection) {
+  navigator.connection.addEventListener('change', updateConnQuality);
+}
+window.addEventListener('online',  () => { updateConnQuality(); hideBanner(); });
+window.addEventListener('offline', () => {
+  updateConnQuality();
+  showBanner('retrying', 'No internet — waiting for connection…');
+});
+updateConnQuality();
+
+// ================================================================
+// AUDIO EVENTS
+// ================================================================
 audio.addEventListener('playing', () => {
   state.isLoading = false;
+  RECONNECT.onRecovered();
   setPlayState(true);
   updateLiveText();
 });
 audio.addEventListener('pause', () => {
   state.isLoading = false;
+  RECONNECT.reset();
   setPlayState(false);
   updateLiveText();
 });
@@ -1564,22 +1825,25 @@ audio.addEventListener('waiting', () => {
   setLoadingState();
   updateLiveText();
   animateWaveform(false);
+  RECONNECT.onStall();
+});
+audio.addEventListener('canplay', () => {
+  clearTimeout(RECONNECT.stallTimer);
+  hideBanner();
+  setBuffering(false);
 });
 audio.addEventListener('error', () => {
   state.isLoading = false;
-  setErrorState('Cannot connect to stream.');
   updateLiveText();
+  // Don't show error immediately — retry first
+  if (state.currentId) {
+    RECONNECT.retry('audio-error');
+  } else {
+    setErrorState('Cannot connect to stream.');
+  }
 });
 audio.addEventListener('stalled', () => {
-  // Try reconnecting after short delay
-  setTimeout(() => {
-    if (state.currentId && !state.isPlaying) {
-      const url = audio.src;
-      audio.src = '';
-      audio.src = url;
-      audio.play().catch(() => {});
-    }
-  }, 3000);
+  RECONNECT.retry('stalled');
 });
 audio.addEventListener('volumechange', () => {
   const vol = Math.round(audio.volume * 100);
